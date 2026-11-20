@@ -134,7 +134,31 @@ footer {
 </head>
 
 <body>
+    
+<section id="authSection" style="max-width:420px;margin:30px auto;padding:25px;background:white;border-radius:12px;box-shadow:0 2px 10px #ddd;">
 
+    <h2 id="authTitle">Business Owner Login</h2>
+
+    <input type="email" id="authEmail" placeholder="Email Address"
+    style="width:100%;padding:12px;margin:8px 0;box-sizing:border-box;">
+
+    <input type="password" id="authPassword" placeholder="Password"
+    style="width:100%;padding:12px;margin:8px 0;box-sizing:border-box;">
+
+    <button id="authButton" onclick="handleAuth()"
+    style="width:100%;padding:12px;margin-top:10px;background:#198754;color:white;border:0;border-radius:6px;">
+        Login
+    </button>
+
+    <p id="authMessage" style="margin-top:12px;"></p>
+
+    <p>
+        Don't have an account?
+        <a href="#" onclick="toggleAuth();return false;">Register here</a>
+    </p>
+
+</section>
+    
 <header>
     <h1>SMALL BUSINESS MANAGER</h1>
     <p>Manage Your Business with Confidence</p>
