@@ -361,11 +361,13 @@ async function restoreLoginSession() {
     if (data.session) {
         document.getElementById("authSection").style.display = "none";
         document.getElementById("dashboardSection").style.display = "block";
+
+        await checkBusinessProfile();
     }
 }
 
 restoreLoginSession();
 </script>
-    
+
 </body>
 </html>
