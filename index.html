@@ -201,28 +201,26 @@ footer {
 
     <section class="dashboard">
 
-        <div class="card">
-            <h3>Today's Sales</h3>
-            <div class="amount">NLe 0.00</div>
-        </div>
+       <div class="card">
+    <h3>Today's Sales</h3>
+    <div class="amount" id="todaySales">NLe 0.00</div>
+</div>
+       <div class="card">
+    <h3>Today's Expenses</h3>
+    <div class="amount" id="todayExpenses">NLe 0.00</div>
+</div>
 
-        <div class="card">
-            <h3>Today's Expenses</h3>
-            <div class="amount">NLe 0.00</div>
-        </div>
+<div class="card">
+    <h3>Today's Profit</h3>
+    <div class="amount" id="todayProfit">NLe 0.00</div>
+</div>
 
-        <div class="card">
-            <h3>Today's Profit</h3>
-            <div class="amount">NLe 0.00</div>
-        </div>
+<div class="card">
+    <h3>Total Products</h3>
+    <div class="amount" id="totalProducts">0</div>
+</div>
 
-        <div class="card">
-            <h3>Total Products</h3>
-            <div class="amount">0</div>
-        </div>
-
-    </section>
-
+</section>
     <section class="menu">
 
         <button>🛒 Sales</button>
@@ -351,12 +349,77 @@ document.getElementById("dashboardBusinessName").textContent =
 
 document.getElementById("dashboardBusinessType").textContent =
     data.business_type;
+        loadDashboardStats(data.id);
     }
 }
 </script>
 
 <script>
 
+// LOAD LIVE DASHBOARD STATISTICS
+async function loadDashboardStats(businessId) {
+    const today = new Date();
+    const todayDate = today.getFullYear() + "-" +
+        String(today.getMonth() + 1).padStart(2, "0") + "-" +
+        String(today.getDate()).padStart(2, "0");
+
+    try {
+        // GET TODAY'S SALES
+        const { data: sales, error: salesError } = await supabaseClient
+            .from("sales")
+            .select("total_amount")
+            .eq("business_id", businessId)
+            .gte("sale_date", todayDate)
+            .lt("sale_date", new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1)
+                .getFullYear() + "-" +
+                String(new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1).getMonth() + 1).padStart(2, "0") + "-" +
+                String(new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1).getDate()).padStart(2, "0"));
+
+        if (salesError) throw salesError;
+
+        const totalSales = (sales || []).reduce(
+            (sum, item) => sum + Number(item.total_amount || 0), 0
+        );
+
+        // GET TODAY'S EXPENSES
+        const { data: expenses, error: expensesError } = await supabaseClient
+            .from("expenses")
+            .select("amount")
+            .eq("business_id", businessId)
+            .eq("expense_date", todayDate);
+
+        if (expensesError) throw expensesError;
+
+        const totalExpenses = (expenses || []).reduce(
+            (sum, item) => sum + Number(item.amount || 0), 0
+        );
+
+        // GET TOTAL PRODUCTS
+        const { count, error: productsError } = await supabaseClient
+            .from("products")
+            .select("*", { count: "exact", head: true })
+            .eq("business_id", businessId);
+
+        if (productsError) throw productsError;
+
+        // UPDATE DASHBOARD
+        document.getElementById("todaySales").textContent =
+            "NLe " + totalSales.toFixed(2);
+
+        document.getElementById("todayExpenses").textContent =
+            "NLe " + totalExpenses.toFixed(2);
+
+        document.getElementById("todayProfit").textContent =
+            "NLe " + (totalSales - totalExpenses).toFixed(2);
+
+        document.getElementById("totalProducts").textContent =
+            count || 0;
+
+    } catch (error) {
+        console.error("Dashboard statistics error:", error.message);
+    }
+}
+    
 // SAVE BUSINESS INFORMATION
 document.getElementById("businessForm").addEventListener("submit", async function(event) {
     event.preventDefault();
