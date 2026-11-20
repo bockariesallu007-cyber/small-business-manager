@@ -165,6 +165,33 @@ footer {
     <p>Manage Your Business with Confidence</p>
 </header>
 
+<section id="businessSetupSection" class="container" style="display:none;">
+    <h2>Set Up Your Business</h2>
+    <p>Enter your business information to get started.</p>
+
+    <form id="businessForm">
+        <input type="text" id="businessName" placeholder="Business Name" required>
+
+        <select id="businessType" required>
+            <option value="">Select Business Type</option>
+            <option value="Retail Shop">Retail Shop</option>
+            <option value="Supermarket">Supermarket</option>
+            <option value="Restaurant">Restaurant</option>
+            <option value="Pharmacy">Pharmacy</option>
+            <option value="Wholesale">Wholesale</option>
+            <option value="Other">Other</option>
+        </select>
+
+        <input type="tel" id="businessPhone" placeholder="Phone Number">
+
+        <input type="text" id="businessAddress" placeholder="Business Address">
+
+        <button type="submit">Save Business Information</button>
+    </form>
+
+    <p id="businessMessage"></p>
+</section>
+    
 <main class="container">
 
     <section class="welcome">
@@ -278,16 +305,46 @@ async function handleAuth() {
         if (result.data.session) {
             document.getElementById("authSection").style.display = "none";
             document.getElementById("dashboardSection").style.display = "block";
-            alert("Login successful!");
+
+            await checkBusinessProfile();
+
         } else {
             message.textContent =
-                "Account created. Check your email if confirmation is required.";
+                "Account created. Please check your email if confirmation is required.";
         }
 
     } catch (error) {
         message.textContent = error.message;
     } finally {
         button.disabled = false;
+    }
+}
+
+async function checkBusinessProfile() {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+
+    if (!user) return;
+
+    const { data, error } = await supabaseClient
+        .from("businesses")
+        .select("*")
+        .eq("owner_id", user.id)
+        .maybeSingle();
+
+    if (error) {
+        alert("Unable to load business profile: " + error.message);
+        return;
+    }
+
+    const setup = document.getElementById("businessSetupSection");
+    const dashboard = document.querySelector("main.container");
+
+    if (!data) {
+        setup.style.display = "block";
+        dashboard.style.display = "none";
+    } else {
+        setup.style.display = "none";
+        dashboard.style.display = "block";
     }
 }
 </script>
