@@ -277,6 +277,7 @@ async function handleAuth() {
 
         if (result.data.session) {
             document.getElementById("authSection").style.display = "none";
+            document.getElementById("dashboardSection").style.display = "block";
             alert("Login successful!");
         } else {
             message.textContent =
@@ -289,6 +290,24 @@ async function handleAuth() {
         button.disabled = false;
     }
 }
+</script>
+
+<script>
+async function restoreLoginSession() {
+    const { data, error } = await supabaseClient.auth.getSession();
+
+    if (error) {
+        console.error("Session error:", error.message);
+        return;
+    }
+
+    if (data.session) {
+        document.getElementById("authSection").style.display = "none";
+        document.getElementById("dashboardSection").style.display = "block";
+    }
+}
+
+restoreLoginSession();
 </script>
     
 </body>
