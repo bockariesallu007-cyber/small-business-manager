@@ -350,6 +350,45 @@ async function checkBusinessProfile() {
 </script>
 
 <script>
+
+// SAVE BUSINESS INFORMATION
+document.getElementById("businessForm").addEventListener("submit", async function(event) {
+    event.preventDefault();
+
+    const message = document.getElementById("businessMessage");
+    message.textContent = "Saving business information...";
+
+    try {
+        const { data: { user }, error: userError } =
+            await supabaseClient.auth.getUser();
+
+        if (userError) throw userError;
+        if (!user) throw new Error("Please log in again.");
+
+        const { error } = await supabaseClient
+            .from("businesses")
+            .insert({
+                owner_id: user.id,
+                business_name: document.getElementById("businessName").value.trim(),
+                business_type: document.getElementById("businessType").value,
+                phone: document.getElementById("businessPhone").value.trim(),
+                address: document.getElementById("businessAddress").value.trim(),
+                currency_code: "SLE"
+            });
+
+        if (error) throw error;
+
+        message.textContent = "Business information saved successfully!";
+
+        document.getElementById("businessSetupSection").style.display = "none";
+        document.querySelector("main.container").style.display = "block";
+
+    } catch (error) {
+        message.textContent = "Error: " + error.message;
+    }
+});
+
+
 async function restoreLoginSession() {
     const { data, error } = await supabaseClient.auth.getSession();
 
