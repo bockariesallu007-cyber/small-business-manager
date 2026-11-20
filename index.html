@@ -215,5 +215,78 @@ footer {
     <br>Designed for businesses in Sierra Leone
 </footer>
 
+<script>
+let isRegistering = false;
+
+function toggleAuth() {
+    isRegistering = !isRegistering;
+
+    document.getElementById("authTitle").textContent =
+        isRegistering ? "Create Business Account" : "Business Owner Login";
+
+    document.getElementById("authButton").textContent =
+        isRegistering ? "Register" : "Login";
+
+    document.getElementById("authMessage").textContent =
+        "";
+
+    document.querySelector("#authSection p:last-child").innerHTML =
+        isRegistering
+        ? 'Already have an account? <a href="#" onclick="toggleAuth();return false;">Login here</a>'
+        : 'Don\'t have an account? <a href="#" onclick="toggleAuth();return false;">Register here</a>';
+}
+
+async function handleAuth() {
+    const email = document.getElementById("authEmail").value.trim();
+    const password = document.getElementById("authPassword").value;
+    const message = document.getElementById("authMessage");
+    const button = document.getElementById("authButton");
+
+    if (!email || !password) {
+        message.textContent = "Please enter your email and password.";
+        return;
+    }
+
+    if (password.length < 8) {
+        message.textContent = "Password must be at least 8 characters.";
+        return;
+    }
+
+    button.disabled = true;
+    message.textContent = "Please wait...";
+
+    try {
+        let result;
+
+        if (isRegistering) {
+            result = await supabaseClient.auth.signUp({
+                email: email,
+                password: password
+            });
+        } else {
+            result = await supabaseClient.auth.signInWithPassword({
+                email: email,
+                password: password
+            });
+        }
+
+        if (result.error) throw result.error;
+
+        if (result.data.session) {
+            document.getElementById("authSection").style.display = "none";
+            alert("Login successful!");
+        } else {
+            message.textContent =
+                "Account created. Check your email if confirmation is required.";
+        }
+
+    } catch (error) {
+        message.textContent = error.message;
+    } finally {
+        button.disabled = false;
+    }
+}
+</script>
+    
 </body>
 </html>
