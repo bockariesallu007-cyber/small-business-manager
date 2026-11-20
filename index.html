@@ -344,7 +344,13 @@ async function checkBusinessProfile() {
         dashboard.style.display = "none";
     } else {
         setup.style.display = "none";
-        dashboard.style.display = "block";
+dashboard.style.display = "block";
+
+document.getElementById("dashboardBusinessName").textContent =
+    data.business_name;
+
+document.getElementById("dashboardBusinessType").textContent =
+    data.business_type;
     }
 }
 </script>
