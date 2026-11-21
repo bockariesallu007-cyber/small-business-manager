@@ -445,6 +445,30 @@ async function loadDashboardStats(businessId) {
         console.error("Dashboard statistics error:", error.message);
     }
 }
+
+// OPEN SALES SECTION
+function openSales() {
+    document.querySelector("main.container").style.display = "none";
+    document.getElementById("salesSection").style.display = "block";
+}
+
+// CLOSE SALES SECTION
+function closeSales() {
+    document.getElementById("salesSection").style.display = "none";
+    document.querySelector("main.container").style.display = "block";
+}
+
+// CALCULATE SALE TOTAL
+function calculateSaleTotal() {
+    const quantity = Number(document.getElementById("saleQuantity").value) || 0;
+    const price = Number(document.getElementById("salePrice").value) || 0;
+
+    document.getElementById("saleTotal").textContent =
+        "NLe " + (quantity * price).toFixed(2);
+}
+
+document.getElementById("saleQuantity").addEventListener("input", calculateSaleTotal);
+document.getElementById("salePrice").addEventListener("input", calculateSaleTotal);
     
 // SAVE BUSINESS INFORMATION
 document.getElementById("businessForm").addEventListener("submit", async function(event) {
