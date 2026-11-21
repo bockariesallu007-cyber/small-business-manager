@@ -458,6 +458,94 @@ function closeSales() {
     document.querySelector("main.container").style.display = "block";
 }
 
+// SAVE SALE TO SUPABASE
+async function saveSale(event) {
+    event.preventDefault();
+
+    const message = document.getElementById("salesMessage");
+    const button = document.querySelector("#salesForm button[type='submit']");
+
+    const productName = document.getElementById("saleProduct").value.trim();
+    const quantity = Number(document.getElementById("saleQuantity").value);
+    const unitPrice = Number(document.getElementById("salePrice").value);
+    const total = quantity * unitPrice;
+
+    if (!productName || quantity <= 0 || unitPrice <= 0) {
+        message.textContent = "Enter a valid product, quantity and price.";
+        return;
+    }
+
+    button.disabled = true;
+    message.textContent = "Saving sale...";
+
+    try {
+        const { data: { user }, error: userError } =
+            await supabaseClient.auth.getUser();
+
+        if (userError) throw userError;
+        if (!user) throw new Error("Please log in again.");
+
+        const { data: business, error: businessError } =
+            await supabaseClient
+                .from("businesses")
+                .select("id")
+                .eq("owner_id", user.id)
+                .single();
+
+        if (businessError) throw businessError;
+
+        // SAVE MAIN SALE
+        const { data: sale, error: saleError } =
+            await supabaseClient
+                .from("sales")
+                .insert({
+                    business_id: business.id,
+                    sale_date: new Date().toISOString(),
+                    total_amount: total,
+                    amount_paid: total,
+                    payment_method: "Cash",
+                    status: "Paid"
+                })
+                .select("id")
+                .single();
+
+        if (saleError) throw saleError;
+
+        // SAVE SALE ITEM
+        const { error: itemError } =
+            await supabaseClient
+                .from("sale_items")
+                .insert({
+                    sale_id: sale.id,
+                    product_name: productName,
+                    quantity: quantity,
+                    unit_price: unitPrice,
+                    subtotal: total
+                });
+
+        if (itemError) {
+            throw new Error(
+                "Sale record was created, but its product details could not be saved: " +
+                itemError.message
+            );
+        }
+
+        message.textContent = "Sale saved successfully!";
+
+        document.getElementById("salesForm").reset();
+        document.getElementById("saleTotal").textContent = "NLe 0.00";
+
+        await loadDashboardStats(business.id);
+
+    } catch (error) {
+        message.textContent = "Error: " + error.message;
+    } finally {
+        button.disabled = false;
+    }
+}
+
+document.getElementById("salesForm").addEventListener("submit", saveSale);
+    
 // CALCULATE SALE TOTAL
 function calculateSaleTotal() {
     const quantity = Number(document.getElementById("saleQuantity").value) || 0;
