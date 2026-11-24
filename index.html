@@ -690,6 +690,57 @@ form button {
     </button>
 
 </section>
+
+<!-- REPORTS SECTION -->
+<section id="reportsSection" class="container" style="display:none;">
+
+    <h2>📊 Business Reports</h2>
+
+    <h3>Generate Financial Report</h3>
+
+    <label for="reportStartDate">Start Date</label>
+    <input type="date" id="reportStartDate">
+
+    <label for="reportEndDate">End Date</label>
+    <input type="date" id="reportEndDate">
+
+    <button type="button" onclick="generateReports()">
+        Generate Report
+    </button>
+
+    <p id="reportsMessage"></p>
+
+    <h3>Report Summary</h3>
+
+    <div class="dashboard">
+
+        <div class="card">
+            <h3>Total Sales</h3>
+            <div class="amount" id="reportTotalSales">NLe 0.00</div>
+        </div>
+
+        <div class="card">
+            <h3>Total Expenses</h3>
+            <div class="amount" id="reportTotalExpenses">NLe 0.00</div>
+        </div>
+
+        <div class="card">
+            <h3>Profit</h3>
+            <div class="amount" id="reportTotalProfit">NLe 0.00</div>
+        </div>
+
+        <div class="card">
+            <h3>Sales Transactions</h3>
+            <div class="amount" id="reportTransactions">0</div>
+        </div>
+
+    </div>
+
+    <button type="button" onclick="closeReports()">
+        Back to Dashboard
+    </button>
+
+</section>
     
 </div>
     
