@@ -1007,6 +1007,29 @@ function closeReports() {
     document.getElementById("reportsSection").style.display = "none";
     document.querySelector("main.container").style.display = "block";
 }
+
+// OPEN RECEIPTS
+function openReceipts() {
+    document.querySelector("main.container").style.display = "none";
+
+    document.getElementById("salesSection").style.display = "none";
+    document.getElementById("salesHistorySection").style.display = "none";
+    document.getElementById("inventorySection").style.display = "none";
+    document.getElementById("expensesSection").style.display = "none";
+    document.getElementById("customersSection").style.display = "none";
+    document.getElementById("suppliersSection").style.display = "none";
+    document.getElementById("reportsSection").style.display = "none";
+
+    document.getElementById("receiptsSection").style.display = "block";
+
+    loadReceiptSales();
+}
+
+// CLOSE RECEIPTS
+function closeReceipts() {
+    document.getElementById("receiptsSection").style.display = "none";
+    document.querySelector("main.container").style.display = "block";
+}
     
 // OPEN INVENTORY
 function openInventory() {
