@@ -741,6 +741,83 @@ form button {
     </button>
 
 </section>
+
+<!-- RECEIPTS SECTION -->
+<section id="receiptsSection" class="container" style="display:none;">
+
+    <h2>🧾 Receipts Management</h2>
+
+    <h3>Generate Customer Receipt</h3>
+
+    <label for="receiptSaleSelect">Select Sales Transaction</label>
+
+    <select id="receiptSaleSelect">
+        <option value="">Select a saved sale</option>
+    </select>
+
+    <button type="button" onclick="loadReceipt()">
+        Generate Receipt
+    </button>
+
+    <p id="receiptMessage"></p>
+
+    <!-- RECEIPT PREVIEW -->
+    <div id="receiptPreview"
+         style="display:none;background:white;padding:20px;
+         margin-top:20px;border:1px solid #ddd;border-radius:10px;">
+
+        <div style="text-align:center;">
+            <h2 id="receiptBusinessName">Business Name</h2>
+            <p id="receiptBusinessDetails"></p>
+            <h3>PAYMENT RECEIPT</h3>
+        </div>
+
+        <hr>
+
+        <p>Receipt Number: <strong id="receiptNumber"></strong></p>
+        <p>Date: <strong id="receiptDate"></strong></p>
+
+        <div style="overflow-x:auto;">
+            <table style="width:100%;">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Quantity</th>
+                        <th>Unit Price</th>
+                        <th>Amount</th>
+                    </tr>
+                </thead>
+
+                <tbody id="receiptItemsBody"></tbody>
+            </table>
+        </div>
+
+        <hr>
+
+        <p>Total Amount: <strong id="receiptTotal"></strong></p>
+        <p>Amount Paid: <strong id="receiptPaid"></strong></p>
+        <p>Outstanding Balance: <strong id="receiptBalance"></strong></p>
+        <p>Payment Method: <strong id="receiptPaymentMethod"></strong></p>
+        <p>Payment Status: <strong id="receiptStatus"></strong></p>
+
+        <hr>
+
+        <p style="text-align:center;">
+            Thank you for your business!
+        </p>
+
+    </div>
+
+    <button type="button" id="printReceiptButton"
+            onclick="printReceipt()" style="display:none;">
+        🖨️ Print Receipt
+    </button>
+
+    <button type="button" onclick="closeReceipts()">
+        Back to Dashboard
+    </button>
+
+</section>
     
 </div>
     
