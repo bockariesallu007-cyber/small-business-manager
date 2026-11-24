@@ -976,6 +976,145 @@ async function loadLowStockAlerts(businessId) {
         console.error("Low stock alert error:", error);
     }
 }
+
+// SAVE EXPENSE
+async function saveExpense(event) {
+    event.preventDefault();
+
+    const message = document.getElementById("expensesMessage");
+    const button = document.querySelector("#expensesForm button[type='submit']");
+
+    const expenseName = document.getElementById("expenseName").value.trim();
+    const category = document.getElementById("expenseCategory").value;
+    const amount = Number(document.getElementById("expenseAmount").value);
+    const expenseDate = document.getElementById("expenseDate").value;
+    const paymentMethod = document.getElementById("expensePaymentMethod").value;
+    const description = document.getElementById("expenseDescription").value.trim();
+
+    if (!expenseName || !category || amount <= 0 || !expenseDate || !paymentMethod) {
+        message.textContent = "Please enter valid expense details.";
+        return;
+    }
+
+    button.disabled = true;
+    message.textContent = "Saving expense...";
+
+    try {
+        const { data: { user }, error: userError } =
+            await supabaseClient.auth.getUser();
+
+        if (userError) throw userError;
+        if (!user) throw new Error("Please log in again.");
+
+        const { data: business, error: businessError } =
+            await supabaseClient
+                .from("businesses")
+                .select("id")
+                .eq("owner_id", user.id)
+                .single();
+
+        if (businessError) throw businessError;
+
+        const { error } = await supabaseClient
+            .from("expenses")
+            .insert({
+                business_id: business.id,
+                expense_name: expenseName,
+                category: category,
+                amount: amount,
+                expense_date: expenseDate,
+                payment_method: paymentMethod,
+                description: description
+            });
+
+        if (error) throw error;
+
+        message.textContent = "Expense saved successfully!";
+
+        document.getElementById("expensesForm").reset();
+
+        await loadExpenses();
+        await loadDashboardStats(business.id);
+
+    } catch (error) {
+        message.textContent = "Error: " + error.message;
+    } finally {
+        button.disabled = false;
+    }
+}
+
+
+// LOAD EXPENSE RECORDS
+async function loadExpenses() {
+    const tbody = document.getElementById("expensesBody");
+
+    tbody.innerHTML =
+        '<tr><td colspan="6">Loading expenses...</td></tr>';
+
+    try {
+        const { data: { user }, error: userError } =
+            await supabaseClient.auth.getUser();
+
+        if (userError) throw userError;
+        if (!user) throw new Error("Please log in again.");
+
+        const { data: business, error: businessError } =
+            await supabaseClient
+                .from("businesses")
+                .select("id")
+                .eq("owner_id", user.id)
+                .single();
+
+        if (businessError) throw businessError;
+
+        const { data: expenses, error } = await supabaseClient
+            .from("expenses")
+            .select("expense_date, expense_name, category, amount, payment_method, description")
+            .eq("business_id", business.id)
+            .order("expense_date", { ascending: false });
+
+        if (error) throw error;
+
+        if (!expenses || expenses.length === 0) {
+            tbody.innerHTML =
+                '<tr><td colspan="6">No expense records found.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = "";
+
+        expenses.forEach(expense => {
+            const row = document.createElement("tr");
+
+            const values = [
+                expense.expense_date || "N/A",
+                expense.expense_name || "Expense",
+                expense.category || "N/A",
+                "NLe " + Number(expense.amount || 0).toFixed(2),
+                expense.payment_method || "N/A",
+                expense.description || "N/A"
+            ];
+
+            values.forEach(value => {
+                const cell = document.createElement("td");
+                cell.textContent = value;
+                row.appendChild(cell);
+            });
+
+            tbody.appendChild(row);
+        });
+
+    } catch (error) {
+        console.error("Expenses loading error:", error);
+        tbody.innerHTML =
+            '<tr><td colspan="6">Error: ' + error.message + '</td></tr>';
+    }
+}
+
+
+// CONNECT EXPENSE FORM
+document.getElementById("expensesForm")
+    .addEventListener("submit", saveExpense);
     
 // OPEN SALES SECTION
 function openSales() {
