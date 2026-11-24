@@ -564,6 +564,67 @@ form button {
     </button>
 
 </section>
+
+<!-- CUSTOMERS SECTION -->
+<section id="customersSection" class="container" style="display:none;">
+
+    <h2>👥 Customers Management</h2>
+
+    <h3>Register New Customer</h3>
+
+    <form id="customersForm">
+
+        <input type="text" id="customerName"
+               placeholder="Customer Full Name" required>
+
+        <input type="tel" id="customerPhone"
+               placeholder="Customer Phone Number" required>
+
+        <input type="email" id="customerEmail"
+               placeholder="Email Address (Optional)">
+
+        <textarea id="customerAddress"
+                  placeholder="Customer Address"
+                  style="width:100%;padding:13px;margin:10px 0;
+                  border:1px solid #ccc;border-radius:7px;
+                  min-height:80px;font-size:16px;"></textarea>
+
+        <button type="submit">Save Customer</button>
+
+    </form>
+
+    <p id="customersMessage"></p>
+
+    <h3>Registered Customers</h3>
+
+    <button type="button" onclick="loadCustomers()">
+        🔄 Refresh Customers
+    </button>
+
+    <div style="overflow-x:auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Customer Name</th>
+                    <th>Phone</th>
+                    <th>Email</th>
+                    <th>Address</th>
+                </tr>
+            </thead>
+
+            <tbody id="customersBody">
+                <tr>
+                    <td colspan="4">Customer records will appear here.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <button type="button" onclick="closeCustomers()">
+        Back to Dashboard
+    </button>
+
+</section>
     
 </div>
     
