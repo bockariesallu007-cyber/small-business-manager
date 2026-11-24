@@ -759,6 +759,24 @@ function closeExpenses() {
     document.getElementById("expensesSection").style.display = "none";
     document.querySelector("main.container").style.display = "block";
 }
+
+// OPEN CUSTOMERS
+function openCustomers() {
+    document.querySelector("main.container").style.display = "none";
+    document.getElementById("salesSection").style.display = "none";
+    document.getElementById("salesHistorySection").style.display = "none";
+    document.getElementById("inventorySection").style.display = "none";
+    document.getElementById("expensesSection").style.display = "none";
+    document.getElementById("customersSection").style.display = "block";
+
+    loadCustomers();
+}
+
+// CLOSE CUSTOMERS
+function closeCustomers() {
+    document.getElementById("customersSection").style.display = "none";
+    document.querySelector("main.container").style.display = "block";
+}
     
 // OPEN INVENTORY
 function openInventory() {
