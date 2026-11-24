@@ -625,6 +625,71 @@ form button {
     </button>
 
 </section>
+
+<!-- SUPPLIERS SECTION -->
+<section id="suppliersSection" class="container" style="display:none;">
+
+    <h2>🚚 Suppliers Management</h2>
+
+    <h3>Register New Supplier</h3>
+
+    <form id="suppliersForm">
+
+        <input type="text" id="supplierName"
+               placeholder="Supplier or Company Name" required>
+
+        <input type="text" id="supplierContact"
+               placeholder="Contact Person">
+
+        <input type="tel" id="supplierPhone"
+               placeholder="Supplier Phone Number" required>
+
+        <input type="email" id="supplierEmail"
+               placeholder="Email Address (Optional)">
+
+        <textarea id="supplierAddress"
+                  placeholder="Supplier Address"
+                  style="width:100%;padding:13px;margin:10px 0;
+                  border:1px solid #ccc;border-radius:7px;
+                  min-height:80px;font-size:16px;"></textarea>
+
+        <button type="submit">Save Supplier</button>
+
+    </form>
+
+    <p id="suppliersMessage"></p>
+
+    <h3>Registered Suppliers</h3>
+
+    <button type="button" onclick="loadSuppliers()">
+        🔄 Refresh Suppliers
+    </button>
+
+    <div style="overflow-x:auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Supplier</th>
+                    <th>Contact Person</th>
+                    <th>Phone</th>
+                    <th>Email</th>
+                    <th>Address</th>
+                </tr>
+            </thead>
+
+            <tbody id="suppliersBody">
+                <tr>
+                    <td colspan="5">Supplier records will appear here.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <button type="button" onclick="closeSuppliers()">
+        Back to Dashboard
+    </button>
+
+</section>
     
 </div>
     
