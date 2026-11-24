@@ -538,6 +538,168 @@ document.getElementById("dashboardBusinessType").textContent =
         loadDashboardStats(data.id);
     }
 }
+
+// OPEN INVENTORY
+function openInventory() {
+    document.querySelector("main.container").style.display = "none";
+    document.getElementById("salesSection").style.display = "none";
+    document.getElementById("salesHistorySection").style.display = "none";
+    document.getElementById("inventorySection").style.display = "block";
+
+    loadInventory();
+}
+
+// CLOSE INVENTORY
+function closeInventory() {
+    document.getElementById("inventorySection").style.display = "none";
+    document.querySelector("main.container").style.display = "block";
+}
+
+// SAVE NEW PRODUCT
+async function saveInventoryProduct(event) {
+    event.preventDefault();
+
+    const message = document.getElementById("inventoryMessage");
+    const button = document.querySelector("#inventoryForm button[type='submit']");
+
+    const productName = document.getElementById("productName").value.trim();
+    const productCode = document.getElementById("productCode").value.trim();
+    const category = document.getElementById("productCategory").value.trim();
+    const purchasePrice = Number(document.getElementById("purchasePrice").value);
+    const sellingPrice = Number(document.getElementById("sellingPrice").value);
+    const quantity = Number(document.getElementById("productQuantity").value);
+    const lowStockLevel = Number(document.getElementById("lowStockLevel").value);
+
+    if (!productName || purchasePrice < 0 || sellingPrice < 0 ||
+        quantity < 0 || lowStockLevel < 0) {
+        message.textContent = "Please enter valid product details.";
+        return;
+    }
+
+    button.disabled = true;
+    message.textContent = "Saving product...";
+
+    try {
+        const { data: { user }, error: userError } =
+            await supabaseClient.auth.getUser();
+
+        if (userError) throw userError;
+        if (!user) throw new Error("Please log in again.");
+
+        const { data: business, error: businessError } =
+            await supabaseClient
+                .from("businesses")
+                .select("id")
+                .eq("owner_id", user.id)
+                .single();
+
+        if (businessError) throw businessError;
+
+        const { error: productError } =
+            await supabaseClient
+                .from("products")
+                .insert({
+                    business_id: business.id,
+                    product_name: productName,
+                    product_code: productCode || null,
+                    category: category || null,
+                    purchase_price: purchasePrice,
+                    selling_price: sellingPrice,
+                    quantity: quantity,
+                    low_stock_level: lowStockLevel
+                });
+
+        if (productError) throw productError;
+
+        message.textContent = "Product saved successfully!";
+
+        document.getElementById("inventoryForm").reset();
+
+        await loadInventory();
+        await loadDashboardStats(business.id);
+
+    } catch (error) {
+        message.textContent = "Error: " + error.message;
+    } finally {
+        button.disabled = false;
+    }
+}
+
+// LOAD INVENTORY FROM SUPABASE
+async function loadInventory() {
+    const tbody = document.getElementById("inventoryBody");
+
+    tbody.innerHTML =
+        '<tr><td colspan="7">Loading products...</td></tr>';
+
+    try {
+        const { data: { user }, error: userError } =
+            await supabaseClient.auth.getUser();
+
+        if (userError) throw userError;
+        if (!user) throw new Error("Please log in again.");
+
+        const { data: business, error: businessError } =
+            await supabaseClient
+                .from("businesses")
+                .select("id")
+                .eq("owner_id", user.id)
+                .single();
+
+        if (businessError) throw businessError;
+
+        const { data: products, error: productsError } =
+            await supabaseClient
+                .from("products")
+                .select("*")
+                .eq("business_id", business.id)
+                .order("product_name");
+
+        if (productsError) throw productsError;
+
+        if (!products || products.length === 0) {
+            tbody.innerHTML =
+                '<tr><td colspan="7">No products found.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = "";
+
+        products.forEach(product => {
+            const row = document.createElement("tr");
+
+            const values = [
+                product.product_name,
+                product.product_code || "N/A",
+                product.category || "N/A",
+                "NLe " + Number(product.purchase_price || 0).toFixed(2),
+                "NLe " + Number(product.selling_price || 0).toFixed(2),
+                product.quantity,
+                Number(product.quantity) <= Number(product.low_stock_level)
+                    ? "Low Stock"
+                    : "In Stock"
+            ];
+
+            values.forEach(value => {
+                const cell = document.createElement("td");
+                cell.textContent = value;
+                row.appendChild(cell);
+            });
+
+            tbody.appendChild(row);
+        });
+
+    } catch (error) {
+        console.error("Inventory error:", error);
+        tbody.innerHTML =
+            '<tr><td colspan="7">Error: ' + error.message + '</td></tr>';
+    }
+}
+
+// CONNECT INVENTORY FORM
+document.getElementById("inventoryForm")
+    .addEventListener("submit", saveInventoryProduct);
+    
 </script>
 
 <script>
