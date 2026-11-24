@@ -1621,6 +1621,104 @@ async function loadSuppliers() {
 document.getElementById("suppliersForm")
     .addEventListener("submit", saveSupplier);
     
+    // GENERATE BUSINESS REPORTS
+async function generateReports() {
+    const message = document.getElementById("reportsMessage");
+
+    const startDate = document.getElementById("reportStartDate").value;
+    const endDate = document.getElementById("reportEndDate").value;
+
+    if (!startDate || !endDate) {
+        message.textContent = "Please select both start and end dates.";
+        return;
+    }
+
+    if (startDate > endDate) {
+        message.textContent = "Start date cannot be after end date.";
+        return;
+    }
+
+    message.textContent = "Generating report...";
+
+    try {
+        const { data: { user }, error: userError } =
+            await supabaseClient.auth.getUser();
+
+        if (userError) throw userError;
+        if (!user) throw new Error("Please log in again.");
+
+        const { data: business, error: businessError } =
+            await supabaseClient
+                .from("businesses")
+                .select("id")
+                .eq("owner_id", user.id)
+                .single();
+
+        if (businessError) throw businessError;
+
+        // Calculate the day after the selected end date
+        const [year, month, day] = endDate.split("-").map(Number);
+
+        const endExclusive = new Date(
+            Date.UTC(year, month - 1, day + 1)
+        ).toISOString().slice(0, 10);
+
+        // LOAD SALES
+        const { data: sales, error: salesError } =
+            await supabaseClient
+                .from("sales")
+                .select("total_amount")
+                .eq("business_id", business.id)
+                .gte("sale_date", startDate)
+                .lt("sale_date", endExclusive);
+
+        if (salesError) throw salesError;
+
+        // LOAD EXPENSES
+        const { data: expenses, error: expensesError } =
+            await supabaseClient
+                .from("expenses")
+                .select("amount")
+                .eq("business_id", business.id)
+                .gte("expense_date", startDate)
+                .lt("expense_date", endExclusive);
+
+        if (expensesError) throw expensesError;
+
+        // CALCULATE TOTALS
+        const totalSales = (sales || []).reduce(
+            (sum, sale) => sum + Number(sale.total_amount || 0), 0
+        );
+
+        const totalExpenses = (expenses || []).reduce(
+            (sum, expense) => sum + Number(expense.amount || 0), 0
+        );
+
+        const profit = totalSales - totalExpenses;
+
+        // DISPLAY RESULTS
+        document.getElementById("reportTotalSales").textContent =
+            "NLe " + totalSales.toFixed(2);
+
+        document.getElementById("reportTotalExpenses").textContent =
+            "NLe " + totalExpenses.toFixed(2);
+
+        document.getElementById("reportTotalProfit").textContent =
+            "NLe " + profit.toFixed(2);
+
+        document.getElementById("reportTransactions").textContent =
+            (sales || []).length;
+
+        message.textContent =
+            "Report generated successfully for " +
+            startDate + " to " + endDate + ".";
+
+    } catch (error) {
+        message.textContent = "Error: " + error.message;
+        console.error("Report generation error:", error);
+    }
+}
+    
 // OPEN SALES SECTION
 function openSales() {
     document.querySelector("main.container").style.display = "none";
