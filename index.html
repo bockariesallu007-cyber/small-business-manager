@@ -480,6 +480,90 @@ form button {
     <button onclick="closeSalesHistory()">Back to Dashboard</button>
 
 </section>
+
+<!-- EXPENSES SECTION -->
+<section id="expensesSection" class="container" style="display:none;">
+
+    <h2>💰 Expenses Management</h2>
+
+    <h3>Record New Expense</h3>
+
+    <form id="expensesForm">
+
+        <input type="text" id="expenseName"
+               placeholder="Expense Name" required>
+
+        <select id="expenseCategory" required>
+            <option value="">Select Expense Category</option>
+            <option value="Rent">Rent</option>
+            <option value="Electricity">Electricity</option>
+            <option value="Water">Water</option>
+            <option value="Transport">Transport</option>
+            <option value="Salary">Salary</option>
+            <option value="Food">Food</option>
+            <option value="Repairs">Repairs</option>
+            <option value="Other">Other</option>
+        </select>
+
+        <input type="number" id="expenseAmount"
+               placeholder="Amount (NLe)"
+               min="0.01" step="0.01" required>
+
+        <label for="expenseDate">Expense Date</label>
+        <input type="date" id="expenseDate" required>
+
+        <select id="expensePaymentMethod" required>
+            <option value="">Select Payment Method</option>
+            <option value="Cash">Cash</option>
+            <option value="Orange Money">Orange Money</option>
+            <option value="Afrimoney">Afrimoney</option>
+            <option value="Bank Transfer">Bank Transfer</option>
+        </select>
+
+        <textarea id="expenseDescription"
+                  placeholder="Additional Notes"
+                  style="width:100%;padding:13px;margin:10px 0;
+                  border:1px solid #ccc;border-radius:7px;
+                  min-height:80px;font-size:16px;"></textarea>
+
+        <button type="submit">Save Expense</button>
+
+    </form>
+
+    <p id="expensesMessage"></p>
+
+    <h3>Expense Records</h3>
+
+    <button type="button" onclick="loadExpenses()">
+        🔄 Refresh Expenses
+    </button>
+
+    <div style="overflow-x:auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Expense</th>
+                    <th>Category</th>
+                    <th>Amount</th>
+                    <th>Payment Method</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+
+            <tbody id="expensesBody">
+                <tr>
+                    <td colspan="6">Expense records will appear here.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <button type="button" onclick="closeExpenses()">
+        Back to Dashboard
+    </button>
+
+</section>
     
 </div>
     
