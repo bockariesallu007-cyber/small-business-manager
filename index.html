@@ -1416,6 +1416,141 @@ async function loadCustomers() {
 // CONNECT CUSTOMER FORM
 document.getElementById("customersForm")
     .addEventListener("submit", saveCustomer);
+
+    // SAVE SUPPLIER
+async function saveSupplier(event) {
+    event.preventDefault();
+
+    const message = document.getElementById("suppliersMessage");
+    const button = document.querySelector("#suppliersForm button[type='submit']");
+
+    const supplierName = document.getElementById("supplierName").value.trim();
+    const contactPerson = document.getElementById("supplierContact").value.trim();
+    const phone = document.getElementById("supplierPhone").value.trim();
+    const email = document.getElementById("supplierEmail").value.trim();
+    const address = document.getElementById("supplierAddress").value.trim();
+
+    if (!supplierName || !phone) {
+        message.textContent = "Please enter the supplier name and phone number.";
+        return;
+    }
+
+    button.disabled = true;
+    message.textContent = "Saving supplier...";
+
+    try {
+        const { data: { user }, error: userError } =
+            await supabaseClient.auth.getUser();
+
+        if (userError) throw userError;
+        if (!user) throw new Error("Please log in again.");
+
+        const { data: business, error: businessError } =
+            await supabaseClient
+                .from("businesses")
+                .select("id")
+                .eq("owner_id", user.id)
+                .single();
+
+        if (businessError) throw businessError;
+
+        const { error } = await supabaseClient
+            .from("suppliers")
+            .insert({
+                business_id: business.id,
+                supplier_name: supplierName,
+                contact_person: contactPerson || null,
+                phone: phone,
+                email: email || null,
+                address: address || null
+            });
+
+        if (error) throw error;
+
+        message.textContent = "Supplier saved successfully!";
+
+        document.getElementById("suppliersForm").reset();
+
+        await loadSuppliers();
+
+    } catch (error) {
+        message.textContent = "Error: " + error.message;
+    } finally {
+        button.disabled = false;
+    }
+}
+
+
+// LOAD SUPPLIERS
+async function loadSuppliers() {
+    const tbody = document.getElementById("suppliersBody");
+
+    tbody.innerHTML =
+        '<tr><td colspan="5">Loading suppliers...</td></tr>';
+
+    try {
+        const { data: { user }, error: userError } =
+            await supabaseClient.auth.getUser();
+
+        if (userError) throw userError;
+        if (!user) throw new Error("Please log in again.");
+
+        const { data: business, error: businessError } =
+            await supabaseClient
+                .from("businesses")
+                .select("id")
+                .eq("owner_id", user.id)
+                .single();
+
+        if (businessError) throw businessError;
+
+        const { data: suppliers, error } = await supabaseClient
+            .from("suppliers")
+            .select("supplier_name, contact_person, phone, email, address")
+            .eq("business_id", business.id)
+            .order("supplier_name");
+
+        if (error) throw error;
+
+        if (!suppliers || suppliers.length === 0) {
+            tbody.innerHTML =
+                '<tr><td colspan="5">No suppliers found.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = "";
+
+        suppliers.forEach(supplier => {
+            const row = document.createElement("tr");
+
+            const values = [
+                supplier.supplier_name,
+                supplier.contact_person || "N/A",
+                supplier.phone,
+                supplier.email || "N/A",
+                supplier.address || "N/A"
+            ];
+
+            values.forEach(value => {
+                const cell = document.createElement("td");
+                cell.textContent = value;
+                row.appendChild(cell);
+            });
+
+            tbody.appendChild(row);
+        });
+
+    } catch (error) {
+        console.error("Suppliers loading error:", error);
+        tbody.innerHTML =
+            '<tr><td colspan="5">Error: ' + error.message + '</td></tr>';
+    }
+}
+
+
+// CONNECT SUPPLIER FORM
+document.getElementById("suppliersForm")
+    .addEventListener("submit", saveSupplier);
     
 // OPEN SALES SECTION
 function openSales() {
