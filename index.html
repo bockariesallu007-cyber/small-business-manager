@@ -603,6 +603,29 @@ async function loadSalesHistory() {
 
         if (salesError) throw salesError;
 
+        // CALCULATE SALES HISTORY SUMMARY
+const totalSales = (sales || []).reduce(
+    (sum, sale) => sum + Number(sale.total_amount || 0), 0
+);
+
+const totalPaid = (sales || []).reduce(
+    (sum, sale) => sum + Number(sale.amount_paid || 0), 0
+);
+
+const totalOutstanding = totalSales - totalPaid;
+
+document.getElementById("historyTotalSales").textContent =
+    "NLe " + totalSales.toFixed(2);
+
+document.getElementById("historyAmountPaid").textContent =
+    "NLe " + totalPaid.toFixed(2);
+
+document.getElementById("historyOutstanding").textContent =
+    "NLe " + totalOutstanding.toFixed(2);
+
+document.getElementById("historyTransactions").textContent =
+    (sales || []).length;
+
         if (!sales || sales.length === 0) {
             tbody.innerHTML = `
                 <tr><td colspan="8">No sales records found.</td></tr>
