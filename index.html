@@ -818,6 +818,53 @@ form button {
     </button>
 
 </section>
+
+<!-- SETTINGS SECTION -->
+<section id="settingsSection" class="container" style="display:none;">
+
+    <h2>⚙️ Business Settings</h2>
+
+    <h3>Update Business Information</h3>
+
+    <form id="settingsForm">
+
+        <label for="settingsBusinessName">Business Name</label>
+        <input type="text" id="settingsBusinessName"
+               placeholder="Business Name" required>
+
+        <label for="settingsBusinessType">Business Type</label>
+        <select id="settingsBusinessType" required>
+            <option value="">Select Business Type</option>
+            <option value="Retail Shop">Retail Shop</option>
+            <option value="Supermarket">Supermarket</option>
+            <option value="Restaurant">Restaurant</option>
+            <option value="Pharmacy">Pharmacy</option>
+            <option value="Wholesale">Wholesale</option>
+            <option value="Other">Other</option>
+        </select>
+
+        <label for="settingsBusinessPhone">Phone Number</label>
+        <input type="tel" id="settingsBusinessPhone"
+               placeholder="Business Phone Number">
+
+        <label for="settingsBusinessAddress">Business Address</label>
+        <textarea id="settingsBusinessAddress"
+                  placeholder="Business Address"
+                  style="width:100%;padding:13px;margin:10px 0;
+                  border:1px solid #ccc;border-radius:7px;
+                  min-height:80px;font-size:16px;"></textarea>
+
+        <button type="submit">Save Business Settings</button>
+
+    </form>
+
+    <p id="settingsMessage"></p>
+
+    <button type="button" onclick="closeSettings()">
+        Back to Dashboard
+    </button>
+
+</section>
     
 </div>
     
