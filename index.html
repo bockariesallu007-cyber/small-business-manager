@@ -821,6 +821,9 @@ async function loadDashboardStats(businessId) {
 
         document.getElementById("totalProducts").textContent =
             count || 0;
+        // LOAD LOW STOCK ALERTS
+await loadLowStockAlerts(businessId);
+        
 
     } catch (error) {
         console.error("Dashboard statistics error:", error.message);
