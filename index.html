@@ -468,12 +468,23 @@ async function saveSale(event) {
     const productName = document.getElementById("saleProduct").value.trim();
     const quantity = Number(document.getElementById("saleQuantity").value);
     const unitPrice = Number(document.getElementById("salePrice").value);
+    const amountPaid = Number(document.getElementById("saleAmountPaid").value);
+    const paymentMethod = document.getElementById("salePaymentMethod").value;
+
     const total = quantity * unitPrice;
 
     if (!productName || quantity <= 0 || unitPrice <= 0) {
         message.textContent = "Enter a valid product, quantity and price.";
         return;
     }
+
+    if (!Number.isFinite(amountPaid) || amountPaid < 0 || amountPaid > total) {
+        message.textContent = "Amount paid must be between zero and the total.";
+        return;
+    }
+
+    const status = amountPaid >= total ? "Paid" :
+                   amountPaid > 0 ? "Partial" : "Unpaid";
 
     button.disabled = true;
     message.textContent = "Saving sale...";
@@ -494,7 +505,6 @@ async function saveSale(event) {
 
         if (businessError) throw businessError;
 
-        // SAVE MAIN SALE
         const { data: sale, error: saleError } =
             await supabaseClient
                 .from("sales")
@@ -502,16 +512,15 @@ async function saveSale(event) {
                     business_id: business.id,
                     sale_date: new Date().toISOString(),
                     total_amount: total,
-                    amount_paid: total,
-                    payment_method: "Cash",
-                    status: "Paid"
+                    amount_paid: amountPaid,
+                    payment_method: paymentMethod,
+                    status: status
                 })
                 .select("id")
                 .single();
 
         if (saleError) throw saleError;
 
-        // SAVE SALE ITEM
         const { error: itemError } =
             await supabaseClient
                 .from("sale_items")
@@ -525,15 +534,15 @@ async function saveSale(event) {
 
         if (itemError) {
             throw new Error(
-                "Sale record was created, but its product details could not be saved: " +
+                "Sale was created, but product details could not be saved: " +
                 itemError.message
             );
         }
 
-        message.textContent = "Sale saved successfully!";
+        message.textContent = "Sale saved successfully! Status: " + status;
 
         document.getElementById("salesForm").reset();
-        document.getElementById("saleTotal").textContent = "NLe 0.00";
+        calculateSaleTotal();
 
         await loadDashboardStats(business.id);
 
