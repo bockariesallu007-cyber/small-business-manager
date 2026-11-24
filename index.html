@@ -294,6 +294,31 @@ footer {
 
     <button onclick="loadSalesHistory()">🔄 Refresh Sales</button>
 
+    <!-- SALES SUMMARY CARDS -->
+<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:15px; margin:20px 0;">
+
+    <div class="card">
+        <h3>Total Sales</h3>
+        <h2 id="historyTotalSales">NLe 0.00</h2>
+    </div>
+
+    <div class="card">
+        <h3>Amount Paid</h3>
+        <h2 id="historyAmountPaid">NLe 0.00</h2>
+    </div>
+
+    <div class="card">
+        <h3>Outstanding</h3>
+        <h2 id="historyOutstanding">NLe 0.00</h2>
+    </div>
+
+    <div class="card">
+        <h3>Transactions</h3>
+        <h2 id="historyTransactions">0</h2>
+    </div>
+
+</div>
+
     <div style="overflow-x:auto;">
 
         <table>
