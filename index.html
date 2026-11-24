@@ -842,6 +842,25 @@ function closeCustomers() {
     document.getElementById("customersSection").style.display = "none";
     document.querySelector("main.container").style.display = "block";
 }
+
+// OPEN SUPPLIERS
+function openSuppliers() {
+    document.querySelector("main.container").style.display = "none";
+    document.getElementById("salesSection").style.display = "none";
+    document.getElementById("salesHistorySection").style.display = "none";
+    document.getElementById("inventorySection").style.display = "none";
+    document.getElementById("expensesSection").style.display = "none";
+    document.getElementById("customersSection").style.display = "none";
+    document.getElementById("suppliersSection").style.display = "block";
+
+    loadSuppliers();
+}
+
+// CLOSE SUPPLIERS
+function closeSuppliers() {
+    document.getElementById("suppliersSection").style.display = "none";
+    document.querySelector("main.container").style.display = "block";
+}
     
 // OPEN INVENTORY
 function openInventory() {
