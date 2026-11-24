@@ -1077,6 +1077,68 @@ function closeReceipts() {
     document.getElementById("receiptsSection").style.display = "none";
     document.querySelector("main.container").style.display = "block";
 }
+
+    // OPEN SETTINGS
+function openSettings() {
+    document.querySelector("main.container").style.display = "none";
+
+    document.getElementById("salesSection").style.display = "none";
+    document.getElementById("salesHistorySection").style.display = "none";
+    document.getElementById("inventorySection").style.display = "none";
+    document.getElementById("expensesSection").style.display = "none";
+    document.getElementById("customersSection").style.display = "none";
+    document.getElementById("suppliersSection").style.display = "none";
+    document.getElementById("reportsSection").style.display = "none";
+    document.getElementById("receiptsSection").style.display = "none";
+
+    document.getElementById("settingsSection").style.display = "block";
+
+    loadBusinessSettings();
+}
+
+// CLOSE SETTINGS
+function closeSettings() {
+    document.getElementById("settingsSection").style.display = "none";
+    document.querySelector("main.container").style.display = "block";
+}
+
+// LOAD BUSINESS SETTINGS
+async function loadBusinessSettings() {
+    const message = document.getElementById("settingsMessage");
+
+    try {
+        const { data: { user }, error: userError } =
+            await supabaseClient.auth.getUser();
+
+        if (userError) throw userError;
+        if (!user) throw new Error("Please log in again.");
+
+        const { data: business, error } = await supabaseClient
+            .from("businesses")
+            .select("business_name, business_type, phone, address")
+            .eq("owner_id", user.id)
+            .single();
+
+        if (error) throw error;
+
+        document.getElementById("settingsBusinessName").value =
+            business.business_name || "";
+
+        document.getElementById("settingsBusinessType").value =
+            business.business_type || "";
+
+        document.getElementById("settingsBusinessPhone").value =
+            business.phone || "";
+
+        document.getElementById("settingsBusinessAddress").value =
+            business.address || "";
+
+        message.textContent = "";
+
+    } catch (error) {
+        message.textContent = "Error loading settings: " + error.message;
+    }
+}
     
 // OPEN INVENTORY
 function openInventory() {
