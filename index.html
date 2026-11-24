@@ -1818,6 +1818,267 @@ async function generateReports() {
         console.error("Report generation error:", error);
     }
 }
+
+ // LOAD SALES FOR RECEIPTS
+async function loadReceiptSales() {
+    const select = document.getElementById("receiptSaleSelect");
+
+    select.innerHTML = '<option value="">Loading sales...</option>';
+
+    try {
+        const { data: { user }, error: userError } =
+            await supabaseClient.auth.getUser();
+
+        if (userError) throw userError;
+        if (!user) throw new Error("Please log in again.");
+
+        const { data: business, error: businessError } =
+            await supabaseClient
+                .from("businesses")
+                .select("id")
+                .eq("owner_id", user.id)
+                .single();
+
+        if (businessError) throw businessError;
+
+        const { data: sales, error } = await supabaseClient
+            .from("sales")
+            .select("id, sale_date, total_amount")
+            .eq("business_id", business.id)
+            .order("sale_date", { ascending: false });
+
+        if (error) throw error;
+
+        select.innerHTML =
+            '<option value="">Select a saved sale</option>';
+
+        if (!sales || sales.length === 0) {
+            select.innerHTML =
+                '<option value="">No sales records found</option>';
+            return;
+        }
+
+        sales.forEach(sale => {
+            const option = document.createElement("option");
+
+            option.value = sale.id;
+
+            const date = sale.sale_date
+                ? new Date(sale.sale_date).toLocaleDateString("en-GB")
+                : "No date";
+
+            option.textContent =
+                "Sale " + sale.id.slice(0, 8) +
+                " | " + date +
+                " | NLe " + Number(sale.total_amount || 0).toFixed(2);
+
+            select.appendChild(option);
+        });
+
+    } catch (error) {
+        select.innerHTML =
+            '<option value="">Unable to load sales</option>';
+
+        document.getElementById("receiptMessage").textContent =
+            "Error: " + error.message;
+    }
+}
+
+
+// GENERATE RECEIPT
+async function loadReceipt() {
+    const message = document.getElementById("receiptMessage");
+    const saleId = document.getElementById("receiptSaleSelect").value;
+
+    if (!saleId) {
+        message.textContent = "Please select a sales transaction.";
+        return;
+    }
+
+    message.textContent = "Generating receipt...";
+
+    try {
+        const { data: { user }, error: userError } =
+            await supabaseClient.auth.getUser();
+
+        if (userError) throw userError;
+        if (!user) throw new Error("Please log in again.");
+
+        const { data: business, error: businessError } =
+            await supabaseClient
+                .from("businesses")
+                .select("id, business_name, business_type, phone, address")
+                .eq("owner_id", user.id)
+                .single();
+
+        if (businessError) throw businessError;
+
+        const { data: sale, error: saleError } =
+            await supabaseClient
+                .from("sales")
+                .select(`
+                    id,
+                    sale_date,
+                    total_amount,
+                    amount_paid,
+                    payment_method,
+                    status,
+                    sale_items (
+                        product_name,
+                        quantity,
+                        unit_price,
+                        subtotal
+                    )
+                `)
+                .eq("id", saleId)
+                .eq("business_id", business.id)
+                .single();
+
+        if (saleError) throw saleError;
+
+        // BUSINESS DETAILS
+        document.getElementById("receiptBusinessName").textContent =
+            business.business_name || "Business Name";
+
+        document.getElementById("receiptBusinessDetails").textContent =
+            [business.business_type, business.phone, business.address]
+                .filter(Boolean)
+                .join(" | ");
+
+        // RECEIPT NUMBER AND DATE
+        document.getElementById("receiptNumber").textContent =
+            "R-" + sale.id.slice(0, 8).toUpperCase();
+
+        document.getElementById("receiptDate").textContent =
+            sale.sale_date
+                ? new Date(sale.sale_date).toLocaleString("en-GB")
+                : "N/A";
+
+        // PURCHASED ITEMS
+        const tbody = document.getElementById("receiptItemsBody");
+        tbody.innerHTML = "";
+
+        (sale.sale_items || []).forEach(item => {
+            const row = document.createElement("tr");
+
+            const values = [
+                item.product_name,
+                item.quantity,
+                "NLe " + Number(item.unit_price || 0).toFixed(2),
+                "NLe " + Number(item.subtotal || 0).toFixed(2)
+            ];
+
+            values.forEach(value => {
+                const cell = document.createElement("td");
+                cell.textContent = value;
+                row.appendChild(cell);
+            });
+
+            tbody.appendChild(row);
+        });
+
+        if (!sale.sale_items || sale.sale_items.length === 0) {
+            tbody.innerHTML =
+                '<tr><td colspan="4">No product details found.</td></tr>';
+        }
+
+        // PAYMENT DETAILS
+        const total = Number(sale.total_amount || 0);
+        const paid = Number(sale.amount_paid || 0);
+        const balance = Math.max(0, total - paid);
+
+        document.getElementById("receiptTotal").textContent =
+            "NLe " + total.toFixed(2);
+
+        document.getElementById("receiptPaid").textContent =
+            "NLe " + paid.toFixed(2);
+
+        document.getElementById("receiptBalance").textContent =
+            "NLe " + balance.toFixed(2);
+
+        document.getElementById("receiptPaymentMethod").textContent =
+            sale.payment_method || "N/A";
+
+        document.getElementById("receiptStatus").textContent =
+            sale.status || "N/A";
+
+        // DISPLAY RECEIPT
+        document.getElementById("receiptPreview").style.display = "block";
+
+        document.getElementById("printReceiptButton").style.display =
+            "block";
+
+        message.textContent = "Receipt generated successfully!";
+
+    } catch (error) {
+        message.textContent = "Error: " + error.message;
+        console.error("Receipt generation error:", error);
+    }
+}
+
+
+// PRINT RECEIPT
+function printReceipt() {
+    const receipt = document.getElementById("receiptPreview");
+
+    if (receipt.style.display === "none") {
+        alert("Please generate a receipt first.");
+        return;
+    }
+
+    const printWindow = window.open("", "_blank");
+
+    if (!printWindow) {
+        alert("Please allow pop-ups to print receipts.");
+        return;
+    }
+
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Customer Receipt</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    padding: 25px;
+                    color: #222;
+                }
+
+                h2, h3, p {
+                    text-align: center;
+                }
+
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-top: 15px;
+                }
+
+                th, td {
+                    border: 1px solid #ccc;
+                    padding: 9px;
+                    text-align: left;
+                }
+
+                @media print {
+                    body {
+                        padding: 10px;
+                    }
+                }
+            </style>
+        </head>
+        <body>
+            ${receipt.innerHTML}
+        </body>
+        </html>
+    `);
+
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+    printWindow.close();
+}   
     
 // OPEN SALES SECTION
 function openSales() {
