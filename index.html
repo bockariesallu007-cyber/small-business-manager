@@ -550,10 +550,21 @@ document.getElementById("salesForm").addEventListener("submit", saveSale);
 function calculateSaleTotal() {
     const quantity = Number(document.getElementById("saleQuantity").value) || 0;
     const price = Number(document.getElementById("salePrice").value) || 0;
+    const amountPaid = Number(document.getElementById("saleAmountPaid").value) || 0;
+
+    const total = quantity * price;
+    const balance = Math.max(0, total - amountPaid);
 
     document.getElementById("saleTotal").textContent =
-        "NLe " + (quantity * price).toFixed(2);
+        "NLe " + total.toFixed(2);
+
+    document.getElementById("saleBalance").textContent =
+        "NLe " + balance.toFixed(2);
 }
+
+document.getElementById("saleQuantity").addEventListener("input", calculateSaleTotal);
+document.getElementById("salePrice").addEventListener("input", calculateSaleTotal);
+document.getElementById("saleAmountPaid").addEventListener("input", calculateSaleTotal);
 
 document.getElementById("saleQuantity").addEventListener("input", calculateSaleTotal);
 document.getElementById("salePrice").addEventListener("input", calculateSaleTotal);
