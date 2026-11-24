@@ -1087,13 +1087,13 @@ async function loadExpenses() {
             const row = document.createElement("tr");
 
             const values = [
-                expense.expense_date || "N/A",
-                expense.expense_name || "Expense",
-                expense.category || "N/A",
-                "NLe " + Number(expense.amount || 0).toFixed(2),
-                expense.payment_method || "N/A",
-                expense.description || "N/A"
-            ];
+              expense.expense_date
+    ? new Date(expense.expense_date).toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric"
+      })
+    : "N/A",
 
             values.forEach(value => {
                 const cell = document.createElement("td");
