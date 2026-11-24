@@ -827,6 +827,52 @@ async function loadDashboardStats(businessId) {
     }
 }
 
+// LOAD LOW STOCK ALERTS
+async function loadLowStockAlerts(businessId) {
+    const summary = document.getElementById("lowStockAlertSummary");
+    const alertList = document.getElementById("lowStockAlertList");
+
+    try {
+        const { data: products, error } = await supabaseClient
+            .from("products")
+            .select("product_name, quantity, low_stock_level")
+            .eq("business_id", businessId)
+            .order("product_name");
+
+        if (error) throw error;
+
+        const lowStockProducts = (products || []).filter(product =>
+            Number(product.quantity || 0) <=
+            Number(product.low_stock_level ?? 5)
+        );
+
+        alertList.innerHTML = "";
+
+        if (lowStockProducts.length === 0) {
+            summary.textContent = "✅ All products have sufficient stock.";
+            return;
+        }
+
+        summary.textContent =
+            "⚠️ " + lowStockProducts.length +
+            " product(s) need restocking.";
+
+        lowStockProducts.forEach(product => {
+            const item = document.createElement("li");
+
+            item.textContent =
+                product.product_name + " — " +
+                product.quantity + " remaining";
+
+            alertList.appendChild(item);
+        });
+
+    } catch (error) {
+        summary.textContent = "Unable to load stock alerts.";
+        console.error("Low stock alert error:", error);
+    }
+}
+    
 // OPEN SALES SECTION
 function openSales() {
     document.querySelector("main.container").style.display = "none";
