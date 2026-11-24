@@ -120,10 +120,18 @@ footer {
 }
 
 /* FORM INPUT STYLING */
+form {
+    display: block !important;
+    width: 100%;
+}
+
 form input,
 form select {
-    display: block;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
     width: 100%;
+    min-height: 48px;
     padding: 13px;
     margin: 10px 0;
     border: 1px solid #ccc;
@@ -131,9 +139,11 @@ form select {
     background: white;
     color: #222;
     font-size: 16px;
+    box-sizing: border-box;
 }
 
 form button {
+    display: block;
     width: 100%;
     padding: 13px;
     margin-top: 10px;
