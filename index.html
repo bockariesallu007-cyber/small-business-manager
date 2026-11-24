@@ -519,6 +519,125 @@ function closeSales() {
     document.querySelector("main.container").style.display = "block";
 }
 
+// OPEN SALES HISTORY
+function openSalesHistory() {
+    document.querySelector("main.container").style.display = "none";
+    document.getElementById("salesSection").style.display = "none";
+    document.getElementById("salesHistorySection").style.display = "block";
+
+    loadSalesHistory();
+}
+
+// CLOSE SALES HISTORY
+function closeSalesHistory() {
+    document.getElementById("salesHistorySection").style.display = "none";
+    document.querySelector("main.container").style.display = "block";
+}
+
+// LOAD SALES HISTORY FROM SUPABASE
+async function loadSalesHistory() {
+    const tbody = document.getElementById("salesHistoryBody");
+
+    tbody.innerHTML = `
+        <tr><td colspan="8">Loading sales records...</td></tr>
+    `;
+
+    try {
+        const { data: { user }, error: userError } =
+            await supabaseClient.auth.getUser();
+
+        if (userError) throw userError;
+        if (!user) throw new Error("Please log in again.");
+
+        const { data: business, error: businessError } =
+            await supabaseClient
+                .from("businesses")
+                .select("id")
+                .eq("owner_id", user.id)
+                .single();
+
+        if (businessError) throw businessError;
+
+        const { data: sales, error: salesError } =
+            await supabaseClient
+                .from("sales")
+                .select(`
+                    id,
+                    sale_date,
+                    total_amount,
+                    amount_paid,
+                    payment_method,
+                    status,
+                    sale_items (
+                        product_name,
+                        quantity
+                    )
+                `)
+                .eq("business_id", business.id)
+                .order("sale_date", { ascending: false });
+
+        if (salesError) throw salesError;
+
+        if (!sales || sales.length === 0) {
+            tbody.innerHTML = `
+                <tr><td colspan="8">No sales records found.</td></tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = "";
+
+        sales.forEach(sale => {
+            const balance = Number(sale.total_amount) -
+                            Number(sale.amount_paid);
+
+            const items = sale.sale_items || [];
+
+            const productNames = items.map(item =>
+                item.product_name
+            ).join(", ");
+
+            const quantities = items.map(item =>
+                item.quantity
+            ).join(", ");
+
+            const date = sale.sale_date
+                ? new Date(sale.sale_date).toLocaleString()
+                : "N/A";
+
+            const row = document.createElement("tr");
+
+            const values = [
+                date,
+                productNames || "N/A",
+                quantities || "N/A",
+                "NLe " + Number(sale.total_amount).toFixed(2),
+                "NLe " + Number(sale.amount_paid).toFixed(2),
+                "NLe " + balance.toFixed(2),
+                sale.payment_method || "N/A",
+                sale.status || "N/A"
+            ];
+
+            values.forEach(value => {
+                const cell = document.createElement("td");
+                cell.textContent = value;
+                row.appendChild(cell);
+            });
+
+            tbody.appendChild(row);
+        });
+
+    } catch (error) {
+        console.error("Sales history error:", error);
+
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8">Error loading sales: ${error.message}</td>
+            </tr>
+        `;
+    }
+}
+    
 // SAVE SALE TO SUPABASE
 async function saveSale(event) {
     event.preventDefault();
