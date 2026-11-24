@@ -1139,6 +1139,72 @@ async function loadBusinessSettings() {
         message.textContent = "Error loading settings: " + error.message;
     }
 }
+
+    // SAVE BUSINESS SETTINGS
+async function saveBusinessSettings(event) {
+    event.preventDefault();
+
+    const message = document.getElementById("settingsMessage");
+    const button = document.querySelector("#settingsForm button[type='submit']");
+
+    const businessName =
+        document.getElementById("settingsBusinessName").value.trim();
+
+    const businessType =
+        document.getElementById("settingsBusinessType").value;
+
+    const phone =
+        document.getElementById("settingsBusinessPhone").value.trim();
+
+    const address =
+        document.getElementById("settingsBusinessAddress").value.trim();
+
+    if (!businessName || !businessType) {
+        message.textContent = "Please enter your business name and type.";
+        return;
+    }
+
+    button.disabled = true;
+    message.textContent = "Updating business information...";
+
+    try {
+        const { data: { user }, error: userError } =
+            await supabaseClient.auth.getUser();
+
+        if (userError) throw userError;
+        if (!user) throw new Error("Please log in again.");
+
+        const { error } = await supabaseClient
+            .from("businesses")
+            .update({
+                business_name: businessName,
+                business_type: businessType,
+                phone: phone,
+                address: address
+            })
+            .eq("owner_id", user.id);
+
+        if (error) throw error;
+
+        document.getElementById("dashboardBusinessName").textContent =
+            businessName;
+
+        document.getElementById("dashboardBusinessType").textContent =
+            businessType;
+
+        message.textContent =
+            "Business settings updated successfully!";
+
+    } catch (error) {
+        message.textContent = "Error: " + error.message;
+    } finally {
+        button.disabled = false;
+    }
+}
+
+// CONNECT SETTINGS FORM
+document.getElementById("settingsForm")
+    .addEventListener("submit", saveBusinessSettings);
     
 // OPEN INVENTORY
 function openInventory() {
