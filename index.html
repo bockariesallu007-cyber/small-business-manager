@@ -1994,11 +1994,13 @@ const actionCell = document.createElement("td");
 // Edit button
 const editButton = document.createElement("button");
 editButton.textContent = "Edit";
+            editButton.style.marginRight = "10px";
 editButton.onclick = () => editCustomer(customer);
 
 // Archive button
 const archiveButton = document.createElement("button");
 archiveButton.textContent = "Archive";
+            archiveButton.style.marginLeft = "5px";
 archiveButton.onclick = () =>
     archiveCustomer(customer.id, customer.customer_name);
 
