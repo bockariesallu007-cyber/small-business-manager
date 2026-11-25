@@ -2334,7 +2334,7 @@ async function loadCreditCustomers() {
 }
 
 
-// SHOW CUSTOMER FIELD FOR CREDIT SALES
+// SHOW CUSTOMER AND REPAYMENT DATE FOR CREDIT SALES
 function toggleSaleCustomerField() {
     const paymentMethod =
         document.getElementById("salePaymentMethod").value;
@@ -2345,19 +2345,23 @@ function toggleSaleCustomerField() {
     const customerSelect =
         document.getElementById("saleCustomer");
 
+    const repaymentDate =
+        document.getElementById("saleRepaymentDueDate");
+
     const isCredit = paymentMethod === "Credit";
 
     customerField.style.display = isCredit ? "block" : "none";
 
     customerSelect.required = isCredit;
+    repaymentDate.required = isCredit;
 
     if (isCredit) {
         loadCreditCustomers();
     } else {
         customerSelect.value = "";
+        repaymentDate.value = "";
     }
 }
-
 // CONNECT PAYMENT METHOD TO CUSTOMER SELECTION
 document.getElementById("salePaymentMethod")
     .addEventListener("change", toggleSaleCustomerField);
@@ -2533,6 +2537,10 @@ async function saveSale(event) {
         ? document.getElementById("saleCustomer").value
         : null;
 
+const repaymentDueDate = paymentMethod === "Credit"
+    ? document.getElementById("saleRepaymentDueDate").value
+    : null;
+    
     const total = quantity * unitPrice;
 
     if (!productName || quantity <= 0 || unitPrice <= 0) {
@@ -2550,6 +2558,11 @@ async function saveSale(event) {
         return;
     }
 
+if (paymentMethod === "Credit" && !repaymentDueDate) {
+    message.textContent = "Please select an expected repayment date.";
+    return;
+}
+    
     button.disabled = true;
     message.textContent = "Processing sale and updating inventory...";
 
@@ -2580,7 +2593,8 @@ async function saveSale(event) {
                     p_unit_price: unitPrice,
                     p_amount_paid: amountPaid,
                     p_payment_method: paymentMethod,
-                    p_customer_id: customerId
+                    p_customer_id: customerId,
+p_repayment_due_date: repaymentDueDate
                 }
             );
 
