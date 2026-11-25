@@ -2717,14 +2717,19 @@ async function loadSalesHistory() {
         document.getElementById("historyTransactions").textContent =
             (sales || []).length;
 
-        // SEPARATE PAID AND CREDIT SALES
-        const paidSales = (sales || []).filter(sale =>
-            sale.payment_method !== "Credit"
-        );
+      // CREDIT HISTORY: All credit-originated sales,
+// including fully repaid credit sales, plus other sales
+// that still have outstanding balances.
+const creditSales = (sales || []).filter(sale =>
+    sale.payment_method === "Credit" ||
+    Number(sale.amount_paid || 0) < Number(sale.total_amount || 0)
+);
 
-        const creditSales = (sales || []).filter(sale =>
-            sale.payment_method === "Credit"
-        );
+// PAID HISTORY: Fully paid non-credit transactions.
+const paidSales = (sales || []).filter(sale =>
+    sale.payment_method !== "Credit" &&
+    Number(sale.amount_paid || 0) >= Number(sale.total_amount || 0)
+);
 
         // DISPLAY PAID SALES
         paidBody.innerHTML = "";
