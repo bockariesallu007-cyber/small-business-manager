@@ -806,6 +806,10 @@ form button {
         🔄 Refresh Customers
     </button>
 
+    <button type="button" onclick="loadArchivedCustomers()">
+    📁 Archived Customers
+</button>
+
     <div style="overflow-x:auto;">
         <table>
             <thead>
@@ -826,6 +830,33 @@ form button {
         </table>
     </div>
 
+<!-- ARCHIVED CUSTOMERS -->
+<div id="archivedCustomersSection" style="display:none; margin-top:20px;">
+
+    <h3>📁 Archived Customers</h3>
+
+    <div style="overflow-x:auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Customer Name</th>
+                    <th>Phone</th>
+                    <th>Email</th>
+                    <th>Address</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody id="archivedCustomersBody">
+                <tr>
+                    <td colspan="5">Archived customers will appear here.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+</div>
+    
     <button type="button" onclick="closeCustomers()">
         Back to Dashboard
     </button>
@@ -2076,6 +2107,111 @@ async function archiveCustomer(customerId, customerName) {
 
     } catch (error) {
         alert("Archive failed: " + error.message);
+    }
+}
+
+    // LOAD ARCHIVED CUSTOMERS
+async function loadArchivedCustomers() {
+    const section = document.getElementById("archivedCustomersSection");
+    const tbody = document.getElementById("archivedCustomersBody");
+
+    section.style.display = "block";
+
+    tbody.innerHTML =
+        '<tr><td colspan="5">Loading archived customers...</td></tr>';
+
+    try {
+        const { data: { user }, error: userError } =
+            await supabaseClient.auth.getUser();
+
+        if (userError) throw userError;
+        if (!user) throw new Error("Please log in again.");
+
+        const { data: business, error: businessError } =
+            await supabaseClient
+                .from("businesses")
+                .select("id")
+                .eq("owner_id", user.id)
+                .single();
+
+        if (businessError) throw businessError;
+
+        const { data: customers, error } = await supabaseClient
+            .from("customers")
+            .select("id, customer_name, phone, email, address")
+            .eq("business_id", business.id)
+            .not("archived_at", "is", null)
+            .order("customer_name");
+
+        if (error) throw error;
+
+        if (!customers || customers.length === 0) {
+            tbody.innerHTML =
+                '<tr><td colspan="5">No archived customers found.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = "";
+
+        customers.forEach(customer => {
+            const row = document.createElement("tr");
+
+            [
+                customer.customer_name,
+                customer.phone,
+                customer.email || "N/A",
+                customer.address || "N/A"
+            ].forEach(value => {
+                const cell = document.createElement("td");
+                cell.textContent = value;
+                row.appendChild(cell);
+            });
+
+            const actionCell = document.createElement("td");
+            const restoreButton = document.createElement("button");
+
+            restoreButton.textContent = "Restore";
+            restoreButton.onclick = () =>
+                restoreCustomer(customer.id, customer.customer_name);
+
+            actionCell.appendChild(restoreButton);
+            row.appendChild(actionCell);
+
+            tbody.appendChild(row);
+        });
+
+    } catch (error) {
+        console.error("Archived customers error:", error);
+
+        tbody.innerHTML =
+            '<tr><td colspan="5">Error: ' + error.message + '</td></tr>';
+    }
+}
+
+
+// RESTORE CUSTOMER
+async function restoreCustomer(customerId, customerName) {
+    const confirmed = confirm(
+        "Restore " + customerName + " to Registered Customers?"
+    );
+
+    if (!confirmed) return;
+
+    try {
+        const { error } = await supabaseClient
+            .from("customers")
+            .update({ archived_at: null })
+            .eq("id", customerId);
+
+        if (error) throw error;
+
+        alert("Customer restored successfully.");
+
+        await loadArchivedCustomers();
+        await loadCustomers();
+
+    } catch (error) {
+        alert("Restore failed: " + error.message);
     }
 }
     
