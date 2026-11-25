@@ -2792,52 +2792,76 @@ document.getElementById("historyTransactions").textContent =
     }
 }
     
-// SAVE SALE WITH CUSTOMER AND AUTOMATIC STOCK DEDUCTION
+// SAVE PAID SALE OR CREDIT SALE
 async function saveSale(event) {
     event.preventDefault();
 
     const message = document.getElementById("salesMessage");
     const button = document.querySelector("#salesForm button[type='submit']");
 
-    const productName = document.getElementById("saleProduct").value.trim();
-    const quantity = Number(document.getElementById("saleQuantity").value);
-    const unitPrice = Number(document.getElementById("salePrice").value);
-    const amountPaid = Number(document.getElementById("saleAmountPaid").value);
-    const paymentMethod = document.getElementById("salePaymentMethod").value;
+    const productName =
+        document.getElementById("saleProduct").value.trim();
 
-    const customerId = paymentMethod === "Credit"
+    const quantity =
+        Number(document.getElementById("saleQuantity").value);
+
+    const unitPrice =
+        Number(document.getElementById("salePrice").value);
+
+    const paymentMethod =
+        document.getElementById("salePaymentMethod").value;
+
+    const isCredit = paymentMethod === "Credit";
+
+    const total = Number((quantity * unitPrice).toFixed(2));
+
+    // PAID SALES AUTOMATICALLY RECEIVE FULL PAYMENT
+    const amountPaid = isCredit
+        ? Number(document.getElementById("saleAmountPaid").value)
+        : total;
+
+    const customerId = isCredit
         ? document.getElementById("saleCustomer").value
         : null;
 
-const repaymentDueDate = paymentMethod === "Credit"
-    ? document.getElementById("saleRepaymentDueDate").value
-    : null;
-    
-    const total = quantity * unitPrice;
+    const repaymentDueDate = isCredit
+        ? document.getElementById("saleRepaymentDueDate").value
+        : null;
 
-    if (!productName || quantity <= 0 || unitPrice <= 0) {
-        message.textContent = "Enter a valid product, quantity and price.";
+    if (!productName || !Number.isFinite(quantity) ||
+        quantity <= 0 || !Number.isFinite(unitPrice) ||
+        unitPrice <= 0) {
+
+        message.textContent = "Enter valid product, quantity and price.";
         return;
     }
 
-    if (!Number.isFinite(amountPaid) || amountPaid < 0 || amountPaid > total) {
-        message.textContent = "Amount paid must be between zero and the total.";
+    if (!Number.isFinite(amountPaid) ||
+        amountPaid < 0 || amountPaid > total) {
+
+        message.textContent = "Enter a valid payment amount.";
         return;
     }
 
-    if (paymentMethod === "Credit" && !customerId) {
-        message.textContent = "Please select a registered credit customer.";
+    if (isCredit && (!customerId || customerId === "__new__")) {
+        message.textContent = "Please register or select a credit customer.";
         return;
     }
 
-if (paymentMethod === "Credit" && !repaymentDueDate) {
-    message.textContent = "Please select an expected repayment date.";
-    return;
-}
+    if (isCredit && !repaymentDueDate) {
+        message.textContent = "Please select an expected repayment date.";
+        return;
+    }
 
-    
+    // DISPLAY FULL PAYMENT FOR PAID SALES
+    document.getElementById("saleAmountPaid").value =
+        amountPaid.toFixed(2);
+
     button.disabled = true;
-    message.textContent = "Processing sale and updating inventory...";
+
+    message.textContent = isCredit
+        ? "Processing credit sale..."
+        : "Processing paid sale...";
 
     try {
         const { data: { user }, error: userError } =
@@ -2855,41 +2879,50 @@ if (paymentMethod === "Credit" && !repaymentDueDate) {
 
         if (businessError) throw businessError;
 
-        // SAVE SALE, LINK CUSTOMER AND DEDUCT STOCK
         const { data: result, error: saleError } =
             await supabaseClient.rpc(
                 "record_sale_with_customer_and_deduct_stock",
-               {
-    p_business_id: business.id,
-    p_product_name: productName,
-    p_quantity: quantity,
-    p_unit_price: unitPrice,
-    p_amount_paid: amountPaid,
-    p_payment_method: paymentMethod,
-    p_customer_id: customerId,
-    p_repayment_due_date: repaymentDueDate
-}
+                {
+                    p_business_id: business.id,
+                    p_product_name: productName,
+                    p_quantity: quantity,
+                    p_unit_price: unitPrice,
+                    p_amount_paid: amountPaid,
+                    p_payment_method: paymentMethod,
+                    p_customer_id: customerId,
+                    p_repayment_due_date: repaymentDueDate
+                }
             );
 
         if (saleError) throw saleError;
 
-        const balance = Number(result.outstanding_balance || 0);
+        const balance =
+            Number(result.outstanding_balance || 0);
 
-        message.textContent =
-            "Sale saved successfully! " +
-            "Remaining stock: " + result.remaining_quantity +
-            ". Outstanding balance: NLe " + balance.toFixed(2);
+        message.textContent = isCredit
+            ? "Credit sale saved successfully! Outstanding: NLe " +
+              balance.toFixed(2) +
+              ". Remaining stock: " + result.remaining_quantity
+            : "Paid sale saved successfully! Remaining stock: " +
+              result.remaining_quantity;
 
         document.getElementById("salesForm").reset();
 
         calculateSaleTotal();
         toggleSaleCustomerField();
 
-        // REFRESH DASHBOARD AND LOW STOCK ALERTS
+        document.getElementById("saleActionLabel").textContent =
+            "Save Paid Sale";
+
+        document.getElementById("saleModeNotice").textContent =
+            "Select Paid Sales or Credit Sales to continue.";
+
         await loadDashboardStats(business.id);
 
     } catch (error) {
         message.textContent = "Error: " + error.message;
+        console.error("Sale saving error:", error);
+
     } finally {
         button.disabled = false;
     }
