@@ -2861,30 +2861,48 @@ const paidSales = (sales || []).filter(sale =>
                   ).toLocaleDateString("en-GB")
                 : "Not set";
 
-            const values = [
-                sale.sale_date
-                    ? new Date(sale.sale_date).toLocaleDateString("en-GB")
-                    : "N/A",
-                customer?.customer_name || "Unknown",
-                customer?.phone || "N/A",
-                productNames || "N/A",
-                quantities || "N/A",
-                "NLe " + Number(sale.total_amount || 0).toFixed(2),
-                "NLe " + Number(sale.amount_paid || 0).toFixed(2),
-                "NLe " + balance.toFixed(2),
-                dueDate,
-                sale.status || "N/A"
-            ];
+           const values = [
+    sale.sale_date
+        ? new Date(sale.sale_date).toLocaleDateString("en-GB")
+        : "N/A",
+    customer?.customer_name || "Unknown",
+    customer?.phone || "N/A",
+    productNames || "N/A",
+    quantities || "N/A",
+    "NLe " + Number(sale.total_amount || 0).toFixed(2),
+    "NLe " + Number(sale.amount_paid || 0).toFixed(2),
+    "NLe " + balance.toFixed(2),
+    dueDate,
+    sale.status || "N/A"
+];
 
-            values.forEach(value => {
-                const cell = document.createElement("td");
-                cell.textContent = value;
-                row.appendChild(cell);
-            });
+values.forEach(value => {
+    const cell = document.createElement("td");
+    cell.textContent = value;
+    row.appendChild(cell);
+});
 
-            creditBody.appendChild(row);
-        });
+// REPAYMENT ACTION
+const actionCell = document.createElement("td");
 
+if (balance > 0) {
+    const repaymentButton = document.createElement("button");
+
+    repaymentButton.type = "button";
+    repaymentButton.textContent = "Record Repayment";
+
+    repaymentButton.addEventListener("click", () => {
+        openRepaymentForm(sale.id, balance);
+    });
+
+    actionCell.appendChild(repaymentButton);
+} else {
+    actionCell.textContent = "Fully Paid";
+}
+
+row.appendChild(actionCell);
+
+creditBody.appendChild(row);
     } catch (error) {
         console.error("Sales history error:", error);
 
