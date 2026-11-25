@@ -2643,13 +2643,16 @@ function closeSalesHistory() {
     document.querySelector("main.container").style.display = "block";
 }
 
-// LOAD SALES HISTORY FROM SUPABASE
+// LOAD SEPARATE PAID AND CREDIT SALES HISTORY
 async function loadSalesHistory() {
-    const tbody = document.getElementById("salesHistoryBody");
+    const paidBody = document.getElementById("paidSalesHistoryBody");
+    const creditBody = document.getElementById("creditSalesHistoryBody");
 
-    tbody.innerHTML = `
-        <tr><td colspan="8">Loading sales records...</td></tr>
-    `;
+    paidBody.innerHTML =
+        '<tr><td colspan="6">Loading paid sales...</td></tr>';
+
+    creditBody.innerHTML =
+        '<tr><td colspan="10">Loading credit sales...</td></tr>';
 
     try {
         const { data: { user }, error: userError } =
@@ -2667,61 +2670,72 @@ async function loadSalesHistory() {
 
         if (businessError) throw businessError;
 
-        const { data: sales, error: salesError } =
-            await supabaseClient
-                .from("sales")
-                .select(`
-                    id,
-                    sale_date,
-                    total_amount,
-                    amount_paid,
-                    payment_method,
-                    status,
-                    sale_items (
-                        product_name,
-                        quantity
-                    )
-                `)
-                .eq("business_id", business.id)
-                .order("sale_date", { ascending: false });
+        const { data: sales, error } = await supabaseClient
+            .from("sales")
+            .select(`
+                id,
+                sale_date,
+                total_amount,
+                amount_paid,
+                payment_method,
+                status,
+                repayment_due_date,
+                customer:customers (
+                    customer_name,
+                    phone
+                ),
+                sale_items (
+                    product_name,
+                    quantity
+                )
+            `)
+            .eq("business_id", business.id)
+            .order("sale_date", { ascending: false });
 
-        if (salesError) throw salesError;
+        if (error) throw error;
 
-        // CALCULATE SALES HISTORY SUMMARY
-const totalSales = (sales || []).reduce(
-    (sum, sale) => sum + Number(sale.total_amount || 0), 0
-);
+        // UPDATE SALES SUMMARY
+        const totalSales = (sales || []).reduce(
+            (sum, sale) => sum + Number(sale.total_amount || 0), 0
+        );
 
-const totalPaid = (sales || []).reduce(
-    (sum, sale) => sum + Number(sale.amount_paid || 0), 0
-);
+        const totalPaid = (sales || []).reduce(
+            (sum, sale) => sum + Number(sale.amount_paid || 0), 0
+        );
 
-const totalOutstanding = totalSales - totalPaid;
+        const totalOutstanding = totalSales - totalPaid;
 
-document.getElementById("historyTotalSales").textContent =
-    "NLe " + totalSales.toFixed(2);
+        document.getElementById("historyTotalSales").textContent =
+            "NLe " + totalSales.toFixed(2);
 
-document.getElementById("historyAmountPaid").textContent =
-    "NLe " + totalPaid.toFixed(2);
+        document.getElementById("historyAmountPaid").textContent =
+            "NLe " + totalPaid.toFixed(2);
 
-document.getElementById("historyOutstanding").textContent =
-    "NLe " + totalOutstanding.toFixed(2);
+        document.getElementById("historyOutstanding").textContent =
+            "NLe " + totalOutstanding.toFixed(2);
 
-document.getElementById("historyTransactions").textContent =
-    (sales || []).length;
+        document.getElementById("historyTransactions").textContent =
+            (sales || []).length;
 
-        if (!sales || sales.length === 0) {
-            tbody.innerHTML = `
-                <tr><td colspan="8">No sales records found.</td></tr>
-            `;
-            return;
+        // SEPARATE PAID AND CREDIT SALES
+        const paidSales = (sales || []).filter(sale =>
+            sale.payment_method !== "Credit"
+        );
+
+        const creditSales = (sales || []).filter(sale =>
+            sale.payment_method === "Credit"
+        );
+
+        // DISPLAY PAID SALES
+        paidBody.innerHTML = "";
+
+        if (paidSales.length === 0) {
+            paidBody.innerHTML =
+                '<tr><td colspan="6">No paid sales found.</td></tr>';
         }
 
-        tbody.innerHTML = "";
-
-        sales.forEach(sale => {
-            const balance = Number(sale.total_amount) -
-                            Number(sale.amount_paid);
+        paidSales.forEach(sale => {
+            const row = document.createElement("tr");
 
             const items = sale.sale_items || [];
 
@@ -2733,19 +2747,13 @@ document.getElementById("historyTransactions").textContent =
                 item.quantity
             ).join(", ");
 
-            const date = sale.sale_date
-                ? new Date(sale.sale_date).toLocaleString()
-                : "N/A";
-
-            const row = document.createElement("tr");
-
             const values = [
-                date,
+                sale.sale_date
+                    ? new Date(sale.sale_date).toLocaleString("en-GB")
+                    : "N/A",
                 productNames || "N/A",
                 quantities || "N/A",
-                "NLe " + Number(sale.total_amount).toFixed(2),
-                "NLe " + Number(sale.amount_paid).toFixed(2),
-                "NLe " + balance.toFixed(2),
+                "NLe " + Number(sale.total_amount || 0).toFixed(2),
                 sale.payment_method || "N/A",
                 sale.status || "N/A"
             ];
@@ -2756,17 +2764,78 @@ document.getElementById("historyTransactions").textContent =
                 row.appendChild(cell);
             });
 
-            tbody.appendChild(row);
+            paidBody.appendChild(row);
+        });
+
+        // DISPLAY CREDIT SALES
+        creditBody.innerHTML = "";
+
+        if (creditSales.length === 0) {
+            creditBody.innerHTML =
+                '<tr><td colspan="10">No credit sales found.</td></tr>';
+        }
+
+        creditSales.forEach(sale => {
+            const row = document.createElement("tr");
+
+            const items = sale.sale_items || [];
+
+            const productNames = items.map(item =>
+                item.product_name
+            ).join(", ");
+
+            const quantities = items.map(item =>
+                item.quantity
+            ).join(", ");
+
+            const customer = Array.isArray(sale.customer)
+                ? sale.customer[0]
+                : sale.customer;
+
+            const balance = Math.max(
+                0,
+                Number(sale.total_amount || 0) -
+                Number(sale.amount_paid || 0)
+            );
+
+            const dueDate = sale.repayment_due_date
+                ? new Date(
+                    sale.repayment_due_date + "T00:00:00"
+                  ).toLocaleDateString("en-GB")
+                : "Not set";
+
+            const values = [
+                sale.sale_date
+                    ? new Date(sale.sale_date).toLocaleDateString("en-GB")
+                    : "N/A",
+                customer?.customer_name || "Unknown",
+                customer?.phone || "N/A",
+                productNames || "N/A",
+                quantities || "N/A",
+                "NLe " + Number(sale.total_amount || 0).toFixed(2),
+                "NLe " + Number(sale.amount_paid || 0).toFixed(2),
+                "NLe " + balance.toFixed(2),
+                dueDate,
+                sale.status || "N/A"
+            ];
+
+            values.forEach(value => {
+                const cell = document.createElement("td");
+                cell.textContent = value;
+                row.appendChild(cell);
+            });
+
+            creditBody.appendChild(row);
         });
 
     } catch (error) {
         console.error("Sales history error:", error);
 
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="8">Error loading sales: ${error.message}</td>
-            </tr>
-        `;
+        paidBody.innerHTML =
+            '<tr><td colspan="6">Error: ' + error.message + '</td></tr>';
+
+        creditBody.innerHTML =
+            '<tr><td colspan="10">Error: ' + error.message + '</td></tr>';
     }
 }
     
