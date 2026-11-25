@@ -602,6 +602,18 @@ form button {
         </table>
     </div>
 
+<h3>✅ Paid Sales History</h3>
+
+<input
+    type="search"
+    id="paidSalesSearch"
+    placeholder="🔍 Search paid sales by product, date or payment method..."
+    oninput="filterHistory('paidSalesSearch', 'paidSalesHistoryBody')"
+    style="width:100%;padding:12px;margin:10px 0;border:1px solid #ccc;border-radius:7px;font-size:16px;"
+>
+
+<div style="overflow-x:auto;">
+    
     <hr>
 
     <h3>💳 Credit Sales History</h3>
@@ -628,7 +640,15 @@ form button {
             </tbody>
         </table>
     </div>
-
+    
+<input
+    type="search"
+    id="creditSalesSearch"
+    placeholder="🔍 Search credit sales by customer, phone, product or date..."
+    oninput="filterHistory('creditSalesSearch', 'creditSalesHistoryBody')"
+    style="width:100%;padding:12px;margin:10px 0;border:1px solid #ccc;border-radius:7px;font-size:16px;"
+>
+    
 <!-- CUSTOMER REPAYMENT FORM -->
 <div id="repaymentPanel"
      style="display:none;background:#f3f6f4;padding:20px;margin:20px 0;border-radius:10px;">
@@ -764,6 +784,14 @@ form button {
         </table>
     </div>
 
+<input
+    type="search"
+    id="expensesSearch"
+    placeholder="🔍 Search expenses by name, category or date..."
+    oninput="filterHistory('expensesSearch', 'expensesBody')"
+    style="width:100%;padding:12px;margin:10px 0;border:1px solid #ccc;border-radius:7px;font-size:16px;"
+>
+    
     <button type="button" onclick="closeExpenses()">
         Back to Dashboard
     </button>
@@ -3029,6 +3057,24 @@ function closeSalesHistory() {
     document.querySelector("main.container").style.display = "block";
 }
 
+// SEARCH HISTORY TABLES
+function filterHistory(searchId, tableBodyId) {
+    const searchValue = document
+        .getElementById(searchId)
+        .value.toLowerCase().trim();
+
+    const rows = document.querySelectorAll(
+        "#" + tableBodyId + " tr"
+    );
+
+    rows.forEach(row => {
+        const rowText = row.textContent.toLowerCase();
+
+        row.style.display =
+            rowText.includes(searchValue) ? "" : "none";
+    });
+}
+    
 // LOAD SEPARATE PAID AND CREDIT SALES HISTORY
 async function loadSalesHistory() {
     const paidBody = document.getElementById("paidSalesHistoryBody");
