@@ -2265,6 +2265,95 @@ function printReceipt() {
     printWindow.print();
     printWindow.close();
 }   
+
+// LOAD CUSTOMERS FOR CREDIT SALES
+async function loadCreditCustomers() {
+    const select = document.getElementById("saleCustomer");
+
+    select.innerHTML =
+        '<option value="">Loading customers...</option>';
+
+    try {
+        const { data: { user }, error: userError } =
+            await supabaseClient.auth.getUser();
+
+        if (userError) throw userError;
+        if (!user) throw new Error("Please log in again.");
+
+        const { data: business, error: businessError } =
+            await supabaseClient
+                .from("businesses")
+                .select("id")
+                .eq("owner_id", user.id)
+                .single();
+
+        if (businessError) throw businessError;
+
+        const { data: customers, error } =
+            await supabaseClient
+                .from("customers")
+                .select("id, customer_name, phone")
+                .eq("business_id", business.id)
+                .order("customer_name");
+
+        if (error) throw error;
+
+        select.innerHTML =
+            '<option value="">Select Registered Customer</option>';
+
+        if (!customers || customers.length === 0) {
+            select.innerHTML =
+                '<option value="">No registered customers found</option>';
+            return;
+        }
+
+        customers.forEach(customer => {
+            const option = document.createElement("option");
+
+            option.value = customer.id;
+            option.textContent =
+                customer.customer_name + " - " + (customer.phone || "No phone");
+
+            select.appendChild(option);
+        });
+
+    } catch (error) {
+        select.innerHTML =
+            '<option value="">Unable to load customers</option>';
+
+        document.getElementById("salesMessage").textContent =
+            "Customer loading error: " + error.message;
+    }
+}
+
+
+// SHOW CUSTOMER FIELD FOR CREDIT SALES
+function toggleSaleCustomerField() {
+    const paymentMethod =
+        document.getElementById("salePaymentMethod").value;
+
+    const customerField =
+        document.getElementById("saleCustomerField");
+
+    const customerSelect =
+        document.getElementById("saleCustomer");
+
+    const isCredit = paymentMethod === "Credit";
+
+    customerField.style.display = isCredit ? "block" : "none";
+
+    customerSelect.required = isCredit;
+
+    if (isCredit) {
+        loadCreditCustomers();
+    } else {
+        customerSelect.value = "";
+    }
+}
+
+// CONNECT PAYMENT METHOD TO CUSTOMER SELECTION
+document.getElementById("salePaymentMethod")
+    .addEventListener("change", toggleSaleCustomerField);
     
 // OPEN SALES SECTION
 function openSales() {
