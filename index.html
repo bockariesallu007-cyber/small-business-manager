@@ -620,14 +620,66 @@ form button {
                     <th>Outstanding</th>
                     <th>Repayment Date</th>
                     <th>Status</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody id="creditSalesHistoryBody">
-                <tr><td colspan="10">Credit sales will appear here.</td></tr>
+            <td colspan="11">Credit sales will appear here.</td>
             </tbody>
         </table>
     </div>
 
+<!-- CUSTOMER REPAYMENT FORM -->
+<div id="repaymentPanel"
+     style="display:none;background:#f3f6f4;padding:20px;margin:20px 0;border-radius:10px;">
+
+    <h3>💰 Record Customer Repayment</h3>
+
+    <p>Sale Reference: <strong id="repaymentSaleReference"></strong></p>
+
+    <p>Outstanding Balance:
+        <strong id="repaymentOutstanding">NLe 0.00</strong>
+    </p>
+
+    <form id="repaymentForm">
+
+        <input type="hidden" id="repaymentSaleId">
+
+        <label for="repaymentAmount">Amount Received (NLe)</label>
+
+        <input type="number"
+               id="repaymentAmount"
+               min="0.01"
+               step="0.01"
+               placeholder="Enter repayment amount"
+               required>
+
+        <label for="repaymentMethod">Payment Method</label>
+
+        <select id="repaymentMethod" required>
+            <option value="Cash">Cash</option>
+            <option value="Orange Money">Orange Money</option>
+            <option value="Afrimoney">Afrimoney</option>
+            <option value="Bank Transfer">Bank Transfer</option>
+        </select>
+
+        <textarea id="repaymentNote"
+                  placeholder="Payment notes (Optional)"
+                  style="width:100%;padding:13px;margin:10px 0;border:1px solid #ccc;border-radius:7px;min-height:70px;"></textarea>
+
+        <button type="submit">Save Repayment</button>
+
+        <button type="button"
+                onclick="document.getElementById('repaymentPanel').style.display='none';">
+            Cancel
+        </button>
+
+    </form>
+
+    <p id="repaymentMessage"></p>
+
+</div>
+    
     <button type="button" onclick="closeSalesHistory()">
         Back to Dashboard
     </button>
