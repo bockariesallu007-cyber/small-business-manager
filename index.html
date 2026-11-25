@@ -882,6 +882,7 @@ form button {
                     <th>Phone</th>
                     <th>Email</th>
                     <th>Address</th>
+                    <th>Action</th>
                 </tr>
             </thead>
 
@@ -1924,10 +1925,11 @@ async function loadCustomers() {
 
         const { data: customers, error } = await supabaseClient
             .from("customers")
-            .select("customer_name, phone, email, address")
-            .eq("business_id", business.id)
-            .order("customer_name");
-
+            .select("id, customer_name, phone, email, address")
+               .eq("business_id", business.id)
+    .is("archived_at", null)
+    .order("customer_name");
+        
         if (error) throw error;
 
         if (!customers || customers.length === 0) {
@@ -1949,18 +1951,29 @@ async function loadCustomers() {
             ];
 
             values.forEach(value => {
-                const cell = document.createElement("td");
-                cell.textContent = value;
-                row.appendChild(cell);
-            });
+    const cell = document.createElement("td");
+    cell.textContent = value;
+    row.appendChild(cell);
+});
 
-            tbody.appendChild(row);
+// Archive button
+const actionCell = document.createElement("td");
+
+const archiveButton = document.createElement("button");
+archiveButton.textContent = "Archive";
+archiveButton.onclick = () =>
+    archiveCustomer(customer.id, customer.customer_name);
+
+actionCell.appendChild(archiveButton);
+row.appendChild(actionCell);
+
+tbody.appendChild(row);
         });
 
     } catch (error) {
         console.error("Customers loading error:", error);
         tbody.innerHTML =
-            '<tr><td colspan="4">Error: ' + error.message + '</td></tr>';
+            '<tr><td colspan="5">Error: ' + error.message + '</td></tr>';
     }
 }
 
@@ -2038,6 +2051,33 @@ async function downloadCustomers() {
     }
 }
 
+// ARCHIVE CUSTOMER
+async function archiveCustomer(customerId, customerName) {
+    const confirmArchive = confirm(
+        "Are you sure you want to archive " + customerName + "?"
+    );
+
+    if (!confirmArchive) return;
+
+    try {
+        const { error } = await supabaseClient
+            .from("customers")
+            .update({
+                archived_at: new Date().toISOString()
+            })
+            .eq("id", customerId);
+
+        if (error) throw error;
+
+        alert("Customer archived successfully.");
+
+        await loadCustomers();
+
+    } catch (error) {
+        alert("Archive failed: " + error.message);
+    }
+}
+    
 // CONNECT CUSTOMER FORM
 document.getElementById("customersForm")
     .addEventListener("submit", saveCustomer);
