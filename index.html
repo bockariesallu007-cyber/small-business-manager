@@ -2409,7 +2409,7 @@ document.getElementById("historyTransactions").textContent =
     }
 }
     
-// SAVE SALE TO SUPABASE
+// SAVE SALE AND AUTOMATICALLY DEDUCT INVENTORY
 async function saveSale(event) {
     event.preventDefault();
 
@@ -2434,11 +2434,8 @@ async function saveSale(event) {
         return;
     }
 
-    const status = amountPaid >= total ? "Paid" :
-                   amountPaid > 0 ? "Partial" : "Unpaid";
-
     button.disabled = true;
-    message.textContent = "Saving sale...";
+    message.textContent = "Processing sale and updating inventory...";
 
     try {
         const { data: { user }, error: userError } =
@@ -2456,45 +2453,31 @@ async function saveSale(event) {
 
         if (businessError) throw businessError;
 
-        const { data: sale, error: saleError } =
-            await supabaseClient
-                .from("sales")
-                .insert({
-                    business_id: business.id,
-                    sale_date: new Date().toISOString(),
-                    total_amount: total,
-                    amount_paid: amountPaid,
-                    payment_method: paymentMethod,
-                    status: status
-                })
-                .select("id")
-                .single();
+        // SAVE SALE AND DEDUCT STOCK IN ONE TRANSACTION
+        const { data: result, error: saleError } =
+            await supabaseClient.rpc(
+                "record_sale_and_deduct_stock",
+                {
+                    p_business_id: business.id,
+                    p_product_name: productName,
+                    p_quantity: quantity,
+                    p_unit_price: unitPrice,
+                    p_amount_paid: amountPaid,
+                    p_payment_method: paymentMethod
+                }
+            );
 
         if (saleError) throw saleError;
 
-        const { error: itemError } =
-            await supabaseClient
-                .from("sale_items")
-                .insert({
-                    sale_id: sale.id,
-                    product_name: productName,
-                    quantity: quantity,
-                    unit_price: unitPrice,
-                    subtotal: total
-                });
-
-        if (itemError) {
-            throw new Error(
-                "Sale was created, but product details could not be saved: " +
-                itemError.message
-            );
-        }
-
-        message.textContent = "Sale saved successfully! Status: " + status;
+        message.textContent =
+            "Sale saved successfully! Inventory updated. " +
+            "Remaining stock: " + result.remaining_quantity;
 
         document.getElementById("salesForm").reset();
+
         calculateSaleTotal();
 
+        // UPDATE DASHBOARD AND LOW STOCK ALERTS
         await loadDashboardStats(business.id);
 
     } catch (error) {
@@ -2503,7 +2486,6 @@ async function saveSale(event) {
         button.disabled = false;
     }
 }
-
 document.getElementById("salesForm").addEventListener("submit", saveSale);
     
 // CALCULATE SALE TOTAL
