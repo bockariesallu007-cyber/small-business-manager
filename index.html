@@ -547,109 +547,90 @@ form button {
     </button>
 
 </section>
-    <!-- CREDIT CUSTOMER SECTION -->
-<div id="saleCustomerField" style="display:none;">
+ <!-- SALES HISTORY SECTION -->
+<section id="salesHistorySection" class="container" style="display:none;">
 
-    <label for="saleCustomer">Select Credit Customer</label>
+    <h2>📋 Sales History</h2>
 
-    <select id="saleCustomer">
-        <option value="">Select Registered Customer</option>
-        <option value="__new__">+ Register New Customer</option>
-    </select>
+    <button type="button" onclick="loadSalesHistory()">
+        🔄 Refresh Sales History
+    </button>
 
-    <!-- NEW CUSTOMER REGISTRATION -->
-    <div id="newCreditCustomerFields" style="display:none;">
+    <div class="dashboard" style="margin:20px 0;">
 
-        <h3>Register New Credit Customer</h3>
+        <div class="card">
+            <h3>Total Sales</h3>
+            <div class="amount" id="historyTotalSales">NLe 0.00</div>
+        </div>
 
-        <input type="text"
-               id="newCreditCustomerName"
-               placeholder="Customer Full Name">
+        <div class="card">
+            <h3>Amount Paid</h3>
+            <div class="amount" id="historyAmountPaid">NLe 0.00</div>
+        </div>
 
-        <input type="tel"
-               id="newCreditCustomerPhone"
-               placeholder="Customer Phone Number">
+        <div class="card">
+            <h3>Outstanding</h3>
+            <div class="amount" id="historyOutstanding">NLe 0.00</div>
+        </div>
 
-        <input type="email"
-               id="newCreditCustomerEmail"
-               placeholder="Email Address (Optional)">
-
-        <input type="text"
-               id="newCreditCustomerAddress"
-               placeholder="Customer Address">
-
-        <button type="button"
-                onclick="saveNewCreditCustomer()">
-            Save & Select Customer
-        </button>
-
-        <p id="newCreditCustomerMessage"></p>
+        <div class="card">
+            <h3>Transactions</h3>
+            <div class="amount" id="historyTransactions">0</div>
+        </div>
 
     </div>
 
-    <label for="saleRepaymentDueDate">
-        Expected Repayment Date
-    </label>
+    <hr>
 
-    <input type="date" id="saleRepaymentDueDate">
+    <h3>✅ Paid Sales History</h3>
 
-</div>
+    <div style="overflow-x:auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Product</th>
+                    <th>Quantity</th>
+                    <th>Total</th>
+                    <th>Payment Method</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="paidSalesHistoryBody">
+                <tr><td colspan="6">Paid sales will appear here.</td></tr>
+            </tbody>
+        </table>
+    </div>
 
-<!-- PAID SALES HISTORY -->
-<h3>✅ Paid Sales History</h3>
+    <hr>
 
-<div style="overflow-x:auto;">
-    <table>
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Product</th>
-                <th>Quantity</th>
-                <th>Total</th>
-                <th>Payment Method</th>
-                <th>Status</th>
-            </tr>
-        </thead>
+    <h3>💳 Credit Sales History</h3>
 
-        <tbody id="paidSalesHistoryBody">
-            <tr>
-                <td colspan="6">Paid sales will appear here.</td>
-            </tr>
-        </tbody>
-    </table>
-</div>
+    <div style="overflow-x:auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Customer</th>
+                    <th>Phone</th>
+                    <th>Product</th>
+                    <th>Quantity</th>
+                    <th>Total</th>
+                    <th>Amount Paid</th>
+                    <th>Outstanding</th>
+                    <th>Repayment Date</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="creditSalesHistoryBody">
+                <tr><td colspan="10">Credit sales will appear here.</td></tr>
+            </tbody>
+        </table>
+    </div>
 
-<hr style="margin:25px 0;">
-
-<!-- CREDIT SALES HISTORY -->
-<h3>💳 Credit Sales History</h3>
-
-<div style="overflow-x:auto;">
-    <table>
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Customer</th>
-                <th>Phone</th>
-                <th>Product</th>
-                <th>Quantity</th>
-                <th>Total</th>
-                <th>Amount Paid</th>
-                <th>Outstanding</th>
-                <th>Repayment Date</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-
-        <tbody id="creditSalesHistoryBody">
-            <tr>
-                <td colspan="10">Credit sales will appear here.</td>
-            </tr>
-        </tbody>
-    </table>
-</div>
-
-    <button onclick="closeSalesHistory()">Back to Dashboard</button>
+    <button type="button" onclick="closeSalesHistory()">
+        Back to Dashboard
+    </button>
 
 </section>
 
