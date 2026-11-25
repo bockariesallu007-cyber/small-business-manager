@@ -1988,15 +1988,23 @@ async function loadCustomers() {
     row.appendChild(cell);
 });
 
-// Archive button
+// Customer action buttons
 const actionCell = document.createElement("td");
 
+// Edit button
+const editButton = document.createElement("button");
+editButton.textContent = "Edit";
+editButton.onclick = () => editCustomer(customer);
+
+// Archive button
 const archiveButton = document.createElement("button");
 archiveButton.textContent = "Archive";
 archiveButton.onclick = () =>
     archiveCustomer(customer.id, customer.customer_name);
 
+actionCell.appendChild(editButton);
 actionCell.appendChild(archiveButton);
+
 row.appendChild(actionCell);
 
 tbody.appendChild(row);
@@ -2212,6 +2220,48 @@ async function restoreCustomer(customerId, customerName) {
 
     } catch (error) {
         alert("Restore failed: " + error.message);
+    }
+}
+
+    // EDIT CUSTOMER
+async function editCustomer(customer) {
+
+    const newName = prompt("Customer Name:", customer.customer_name);
+    if (newName === null) return;
+
+    const newPhone = prompt("Phone Number:", customer.phone);
+    if (newPhone === null) return;
+
+    const newEmail = prompt("Email Address:", customer.email || "");
+    if (newEmail === null) return;
+
+    const newAddress = prompt("Address:", customer.address || "");
+    if (newAddress === null) return;
+
+    if (!newName.trim() || !newPhone.trim()) {
+        alert("Customer name and phone number are required.");
+        return;
+    }
+
+    try {
+        const { error } = await supabaseClient
+            .from("customers")
+            .update({
+                customer_name: newName.trim(),
+                phone: newPhone.trim(),
+                email: newEmail.trim() || null,
+                address: newAddress.trim() || null
+            })
+            .eq("id", customer.id);
+
+        if (error) throw error;
+
+        alert("Customer information updated successfully!");
+
+        await loadCustomers();
+
+    } catch (error) {
+        alert("Update failed: " + error.message);
     }
 }
     
