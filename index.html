@@ -2587,16 +2587,16 @@ if (paymentMethod === "Credit" && !repaymentDueDate) {
         const { data: result, error: saleError } =
             await supabaseClient.rpc(
                 "record_sale_with_customer_and_deduct_stock",
-                {
-                    p_business_id: business.id,
-                    p_product_name: productName,
-                    p_quantity: quantity,
-                    p_unit_price: unitPrice,
-                    p_amount_paid: amountPaid,
-                    p_customer_id: customerId,
-p_repayment_due_date: repaymentDueDate
-                   
-                }
+               {
+    p_business_id: business.id,
+    p_product_name: productName,
+    p_quantity: quantity,
+    p_unit_price: unitPrice,
+    p_amount_paid: amountPaid,
+    p_payment_method: paymentMethod,
+    p_customer_id: customerId,
+    p_repayment_due_date: repaymentDueDate
+}
             );
 
         if (saleError) throw saleError;
