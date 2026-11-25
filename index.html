@@ -2903,6 +2903,9 @@ if (balance > 0) {
 row.appendChild(actionCell);
 
 creditBody.appendChild(row);
+
+        });
+
     } catch (error) {
         console.error("Sales history error:", error);
 
@@ -2910,7 +2913,7 @@ creditBody.appendChild(row);
             '<tr><td colspan="6">Error: ' + error.message + '</td></tr>';
 
         creditBody.innerHTML =
-            '<tr><td colspan="10">Error: ' + error.message + '</td></tr>';
+    '<tr><td colspan="11">Error: ' + error.message + '</td></tr>';
     }
 }
 
