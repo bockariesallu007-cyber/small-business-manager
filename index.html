@@ -828,7 +828,10 @@ form button {
     <button type="button" onclick="closeCustomers()">
         Back to Dashboard
     </button>
-
+<button type="button" onclick="downloadCustomers()">
+    ⬇️ Download Customers
+</button>
+    
 </section>
 
 <!-- SUPPLIERS SECTION -->
@@ -1961,6 +1964,79 @@ async function loadCustomers() {
     }
 }
 
+    // DOWNLOAD CUSTOMER RECORDS
+async function downloadCustomers() {
+    try {
+        const { data: { user }, error: userError } =
+            await supabaseClient.auth.getUser();
+
+        if (userError) throw userError;
+        if (!user) throw new Error("Please log in again.");
+
+        const { data: business, error: businessError } =
+            await supabaseClient
+                .from("businesses")
+                .select("id")
+                .eq("owner_id", user.id)
+                .single();
+
+        if (businessError) throw businessError;
+
+        const { data: customers, error } = await supabaseClient
+            .from("customers")
+            .select("customer_name, phone, email, address, created_at")
+            .eq("business_id", business.id)
+            .order("customer_name");
+
+        if (error) throw error;
+
+        if (!customers || customers.length === 0) {
+            alert("There are no customer records to download.");
+            return;
+        }
+
+        const headers = [
+            "Customer Name",
+            "Phone",
+            "Email",
+            "Address",
+            "Registration Date"
+        ];
+
+        const rows = customers.map(customer => [
+            customer.customer_name,
+            customer.phone,
+            customer.email || "",
+            customer.address || "",
+            customer.created_at || ""
+        ]);
+
+        const csv = [headers, ...rows]
+            .map(row => row.map(value =>
+                '"' + String(value ?? "").replace(/"/g, '""') + '"'
+            ).join(","))
+            .join("\n");
+
+        const blob = new Blob(
+            ["\uFEFF" + csv],
+            { type: "text/csv;charset=utf-8;" }
+        );
+
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+
+        link.href = url;
+        link.download = "Customers_List.csv";
+        link.click();
+
+        URL.revokeObjectURL(url);
+
+        alert("Customer records downloaded successfully!");
+
+    } catch (error) {
+        alert("Download failed: " + error.message);
+    }
+}
 
 // CONNECT CUSTOMER FORM
 document.getElementById("customersForm")
