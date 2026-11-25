@@ -582,27 +582,7 @@ form button {
 
     <hr>
 
-    <h3>✅ Paid Sales History</h3>
-
-    <div style="overflow-x:auto;">
-        <table>
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Product</th>
-                    <th>Quantity</th>
-                    <th>Total</th>
-                    <th>Payment Method</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody id="paidSalesHistoryBody">
-                <tr><td colspan="6">Paid sales will appear here.</td></tr>
-            </tbody>
-        </table>
-    </div>
-
-<h3>✅ Paid Sales History</h3>
+   <h3>✅ Paid Sales History</h3>
 
 <input
     type="search"
@@ -613,33 +593,26 @@ form button {
 >
 
 <div style="overflow-x:auto;">
-    
-    <hr>
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Product</th>
+                <th>Quantity</th>
+                <th>Total</th>
+                <th>Payment Method</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
 
-    <h3>💳 Credit Sales History</h3>
-
-    <div style="overflow-x:auto;">
-        <table>
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Customer</th>
-                    <th>Phone</th>
-                    <th>Product</th>
-                    <th>Quantity</th>
-                    <th>Total</th>
-                    <th>Amount Paid</th>
-                    <th>Outstanding</th>
-                    <th>Repayment Date</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody id="creditSalesHistoryBody">
-            <td colspan="11">Credit sales will appear here.</td>
-            </tbody>
-        </table>
-    </div>
+        <tbody id="paidSalesHistoryBody">
+            <tr>
+                <td colspan="7">Paid sales will appear here.</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
     
 <input
     type="search"
@@ -3074,6 +3047,37 @@ function filterHistory(searchId, tableBodyId) {
             rowText.includes(searchValue) ? "" : "none";
     });
 }
+
+// DELETE SALE AND RESTORE STOCK
+async function deleteSale(saleId) {
+
+    const confirmDelete = confirm(
+        "Are you sure you want to permanently delete this sale?\n\n" +
+        "The sold quantity will be returned to inventory.\n" +
+        "Any repayment records for this sale will also be deleted."
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+        const { data, error } = await supabaseClient.rpc(
+            "delete_sale_and_restore_stock",
+            {
+                p_sale_id: saleId
+            }
+        );
+
+        if (error) throw error;
+
+        alert("Sale deleted successfully. Stock has been restored.");
+
+        await loadSalesHistory();
+
+    } catch (error) {
+        console.error("Sale deletion error:", error);
+        alert("Could not delete sale: " + error.message);
+    }
+}
     
 // LOAD SEPARATE PAID AND CREDIT SALES HISTORY
 async function loadSalesHistory() {
@@ -3081,8 +3085,7 @@ async function loadSalesHistory() {
     const creditBody = document.getElementById("creditSalesHistoryBody");
 
     paidBody.innerHTML =
-        '<tr><td colspan="6">Loading paid sales...</td></tr>';
-
+'<tr><td colspan="7">Loading paid sales...</td></tr>';
     creditBody.innerHTML =
         '<tr><td colspan="10">Loading credit sales...</td></tr>';
 
@@ -3168,8 +3171,7 @@ const paidSales = (sales || []).filter(sale =>
 
         if (paidSales.length === 0) {
             paidBody.innerHTML =
-                '<tr><td colspan="6">No paid sales found.</td></tr>';
-        }
+'<tr><td colspan="7">No paid sales found.</td></tr>';        }
 
         paidSales.forEach(sale => {
             const row = document.createElement("tr");
@@ -3201,9 +3203,24 @@ const paidSales = (sales || []).filter(sale =>
                 row.appendChild(cell);
             });
 
-            paidBody.appendChild(row);
-        });
+           // DELETE ACTION
+const actionCell = document.createElement("td");
 
+const deleteButton = document.createElement("button");
+deleteButton.type = "button";
+deleteButton.textContent = "🗑️ Delete";
+deleteButton.style.background = "#dc3545";
+deleteButton.style.color = "white";
+
+deleteButton.addEventListener("click", () => {
+    deleteSale(sale.id);
+});
+
+actionCell.appendChild(deleteButton);
+row.appendChild(actionCell);
+
+paidBody.appendChild(row);
+        });
         // DISPLAY CREDIT SALES
         creditBody.innerHTML = "";
 
