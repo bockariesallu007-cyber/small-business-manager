@@ -2509,7 +2509,7 @@ document.getElementById("historyTransactions").textContent =
     }
 }
     
-// SAVE SALE AND AUTOMATICALLY DEDUCT INVENTORY
+// SAVE SALE WITH CUSTOMER AND AUTOMATIC STOCK DEDUCTION
 async function saveSale(event) {
     event.preventDefault();
 
@@ -2522,6 +2522,10 @@ async function saveSale(event) {
     const amountPaid = Number(document.getElementById("saleAmountPaid").value);
     const paymentMethod = document.getElementById("salePaymentMethod").value;
 
+    const customerId = paymentMethod === "Credit"
+        ? document.getElementById("saleCustomer").value
+        : null;
+
     const total = quantity * unitPrice;
 
     if (!productName || quantity <= 0 || unitPrice <= 0) {
@@ -2531,6 +2535,11 @@ async function saveSale(event) {
 
     if (!Number.isFinite(amountPaid) || amountPaid < 0 || amountPaid > total) {
         message.textContent = "Amount paid must be between zero and the total.";
+        return;
+    }
+
+    if (paymentMethod === "Credit" && !customerId) {
+        message.textContent = "Please select a registered credit customer.";
         return;
     }
 
@@ -2553,31 +2562,36 @@ async function saveSale(event) {
 
         if (businessError) throw businessError;
 
-        // SAVE SALE AND DEDUCT STOCK IN ONE TRANSACTION
+        // SAVE SALE, LINK CUSTOMER AND DEDUCT STOCK
         const { data: result, error: saleError } =
             await supabaseClient.rpc(
-                "record_sale_and_deduct_stock",
+                "record_sale_with_customer_and_deduct_stock",
                 {
                     p_business_id: business.id,
                     p_product_name: productName,
                     p_quantity: quantity,
                     p_unit_price: unitPrice,
                     p_amount_paid: amountPaid,
-                    p_payment_method: paymentMethod
+                    p_payment_method: paymentMethod,
+                    p_customer_id: customerId
                 }
             );
 
         if (saleError) throw saleError;
 
+        const balance = Number(result.outstanding_balance || 0);
+
         message.textContent =
-            "Sale saved successfully! Inventory updated. " +
-            "Remaining stock: " + result.remaining_quantity;
+            "Sale saved successfully! " +
+            "Remaining stock: " + result.remaining_quantity +
+            ". Outstanding balance: NLe " + balance.toFixed(2);
 
         document.getElementById("salesForm").reset();
 
         calculateSaleTotal();
+        toggleSaleCustomerField();
 
-        // UPDATE DASHBOARD AND LOW STOCK ALERTS
+        // REFRESH DASHBOARD AND LOW STOCK ALERTS
         await loadDashboardStats(business.id);
 
     } catch (error) {
