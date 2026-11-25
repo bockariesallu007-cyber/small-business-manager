@@ -2354,23 +2354,25 @@ async function loadCreditCustomers() {
         if (error) throw error;
 
         select.innerHTML =
-            '<option value="">Select Registered Customer</option>';
+            '<option value="">Select Credit Customer</option>';
 
-        if (!customers || customers.length === 0) {
-            select.innerHTML =
-                '<option value="">No registered customers found</option>';
-            return;
-        }
-
-        customers.forEach(customer => {
+        (customers || []).forEach(customer => {
             const option = document.createElement("option");
 
             option.value = customer.id;
             option.textContent =
-                customer.customer_name + " - " + (customer.phone || "No phone");
+                customer.customer_name + " - " +
+                (customer.phone || "No phone");
 
             select.appendChild(option);
         });
+
+        // ADD NEW CUSTOMER OPTION
+        const newOption = document.createElement("option");
+        newOption.value = "__new__";
+        newOption.textContent = "+ Register New Customer";
+
+        select.appendChild(newOption);
 
     } catch (error) {
         select.innerHTML =
@@ -2379,6 +2381,113 @@ async function loadCreditCustomers() {
         document.getElementById("salesMessage").textContent =
             "Customer loading error: " + error.message;
     }
+}
+
+
+// SAVE NEW CREDIT CUSTOMER
+async function saveNewCreditCustomer() {
+    const message =
+        document.getElementById("newCreditCustomerMessage");
+
+    const button = document.querySelector(
+        "#newCreditCustomerFields button"
+    );
+
+    const name =
+        document.getElementById("newCreditCustomerName").value.trim();
+
+    const phone =
+        document.getElementById("newCreditCustomerPhone").value.trim();
+
+    const email =
+        document.getElementById("newCreditCustomerEmail").value.trim();
+
+    const address =
+        document.getElementById("newCreditCustomerAddress").value.trim();
+
+    if (!name || !phone) {
+        message.textContent =
+            "Enter the customer's name and phone number.";
+        return;
+    }
+
+    button.disabled = true;
+    message.textContent = "Registering customer...";
+
+    try {
+        const { data: { user }, error: userError } =
+            await supabaseClient.auth.getUser();
+
+        if (userError) throw userError;
+        if (!user) throw new Error("Please log in again.");
+
+        const { data: business, error: businessError } =
+            await supabaseClient
+                .from("businesses")
+                .select("id")
+                .eq("owner_id", user.id)
+                .single();
+
+        if (businessError) throw businessError;
+
+        const { data: customer, error } =
+            await supabaseClient
+                .from("customers")
+                .insert({
+                    business_id: business.id,
+                    customer_name: name,
+                    phone: phone,
+                    email: email || null,
+                    address: address || null
+                })
+                .select("id, customer_name, phone")
+                .single();
+
+        if (error) throw error;
+
+        // ADD CUSTOMER TO DROPDOWN
+        const select = document.getElementById("saleCustomer");
+
+        const option = document.createElement("option");
+        option.value = customer.id;
+        option.textContent =
+            customer.customer_name + " - " + customer.phone;
+
+        const newOption =
+            select.querySelector('option[value="__new__"]');
+
+        select.insertBefore(option, newOption);
+        select.value = customer.id;
+
+        // CLEAR REGISTRATION FIELDS
+        document.getElementById("newCreditCustomerName").value = "";
+        document.getElementById("newCreditCustomerPhone").value = "";
+        document.getElementById("newCreditCustomerEmail").value = "";
+        document.getElementById("newCreditCustomerAddress").value = "";
+
+        document.getElementById("newCreditCustomerFields").style.display =
+            "none";
+
+        document.getElementById("salesMessage").textContent =
+            "Customer registered and selected successfully!";
+
+    } catch (error) {
+        message.textContent = "Error: " + error.message;
+    } finally {
+        button.disabled = false;
+    }
+}
+
+
+// HANDLE CUSTOMER SELECTION
+function handleCreditCustomerSelection() {
+    const select = document.getElementById("saleCustomer");
+
+    const fields =
+        document.getElementById("newCreditCustomerFields");
+
+    fields.style.display =
+        select.value === "__new__" ? "block" : "none";
 }
 
 
@@ -2408,11 +2517,17 @@ function toggleSaleCustomerField() {
     } else {
         customerSelect.value = "";
         repaymentDate.value = "";
+
+        document.getElementById("newCreditCustomerFields").style.display =
+            "none";
     }
 }
 // CONNECT PAYMENT METHOD TO CUSTOMER SELECTION
 document.getElementById("salePaymentMethod")
     .addEventListener("change", toggleSaleCustomerField);
+
+document.getElementById("saleCustomer")
+    .addEventListener("change", handleCreditCustomerSelection);
     
 // OPEN SALES SECTION
 function openSales() {
