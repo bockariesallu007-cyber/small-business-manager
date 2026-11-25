@@ -2563,6 +2563,11 @@ if (paymentMethod === "Credit" && !repaymentDueDate) {
     return;
 }
     
+if (paymentMethod === "Credit" && !repaymentDueDate) {
+    message.textContent = "Please select an expected repayment date.";
+    return;
+}
+    
     button.disabled = true;
     message.textContent = "Processing sale and updating inventory...";
 
