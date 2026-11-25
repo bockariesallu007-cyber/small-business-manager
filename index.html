@@ -1649,24 +1649,31 @@ document.getElementById("inventoryForm")
 
 <script>
 
-// LOAD LIVE DASHBOARD STATISTICS
 async function loadDashboardStats(businessId) {
     const today = new Date();
+
     const todayDate = today.getFullYear() + "-" +
         String(today.getMonth() + 1).padStart(2, "0") + "-" +
         String(today.getDate()).padStart(2, "0");
+
+    const tomorrow = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate() + 1
+    );
+
+    const tomorrowDate = tomorrow.getFullYear() + "-" +
+        String(tomorrow.getMonth() + 1).padStart(2, "0") + "-" +
+        String(tomorrow.getDate()).padStart(2, "0");
 
     try {
         // GET TODAY'S SALES
         const { data: sales, error: salesError } = await supabaseClient
             .from("sales")
-            .select("total_amount")
+            .select("id, total_amount")
             .eq("business_id", businessId)
             .gte("sale_date", todayDate)
-            .lt("sale_date", new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1)
-                .getFullYear() + "-" +
-                String(new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1).getMonth() + 1).padStart(2, "0") + "-" +
-                String(new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1).getDate()).padStart(2, "0"));
+            .lt("sale_date", tomorrowDate);
 
         if (salesError) throw salesError;
 
@@ -1674,12 +1681,39 @@ async function loadDashboardStats(businessId) {
             (sum, item) => sum + Number(item.total_amount || 0), 0
         );
 
+        // GET TODAY'S SOLD PRODUCTS
+        let totalCost = 0;
+        let missingCostCount = 0;
+
+        if (sales && sales.length > 0) {
+            const saleIds = sales.map(sale => sale.id);
+
+            const { data: saleItems, error: itemsError } =
+                await supabaseClient
+                    .from("sale_items")
+                    .select("quantity, purchase_price")
+                    .in("sale_id", saleIds);
+
+            if (itemsError) throw itemsError;
+
+            (saleItems || []).forEach(item => {
+                if (item.purchase_price === null) {
+                    missingCostCount++;
+                } else {
+                    totalCost +=
+                        Number(item.purchase_price) *
+                        Number(item.quantity);
+                }
+            });
+        }
+
         // GET TODAY'S EXPENSES
-        const { data: expenses, error: expensesError } = await supabaseClient
-            .from("expenses")
-            .select("amount")
-            .eq("business_id", businessId)
-            .eq("expense_date", todayDate);
+        const { data: expenses, error: expensesError } =
+            await supabaseClient
+                .from("expenses")
+                .select("amount")
+                .eq("business_id", businessId)
+                .eq("expense_date", todayDate);
 
         if (expensesError) throw expensesError;
 
@@ -1702,20 +1736,34 @@ async function loadDashboardStats(businessId) {
         document.getElementById("todayExpenses").textContent =
             "NLe " + totalExpenses.toFixed(2);
 
-        document.getElementById("todayProfit").textContent =
-            "NLe " + (totalSales - totalExpenses).toFixed(2);
+        const profitElement = document.getElementById("todayProfit");
+
+        if (missingCostCount > 0) {
+            profitElement.textContent = "Incomplete cost data";
+            profitElement.title =
+                missingCostCount +
+                " sold item(s) have no recorded purchase price.";
+        } else {
+            const totalProfit =
+                totalSales - totalCost - totalExpenses;
+
+            profitElement.textContent =
+                "NLe " + totalProfit.toFixed(2);
+
+            profitElement.title =
+                "Sales minus product costs and expenses.";
+        }
 
         document.getElementById("totalProducts").textContent =
             count || 0;
+
         // LOAD LOW STOCK ALERTS
-await loadLowStockAlerts(businessId);
-        
+        await loadLowStockAlerts(businessId);
 
     } catch (error) {
         console.error("Dashboard statistics error:", error.message);
     }
 }
-
 // LOAD LOW STOCK ALERTS
 async function loadLowStockAlerts(businessId) {
     const summary = document.getElementById("lowStockAlertSummary");
