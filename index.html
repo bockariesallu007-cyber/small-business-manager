@@ -806,6 +806,14 @@ form button {
         🔄 Refresh Customers
     </button>
 
+<input
+    type="search"
+    id="customerSearch"
+    placeholder="🔍 Search customers by name or phone..."
+    oninput="filterCustomers()"
+    style="width:100%; padding:12px; margin:12px 0; border:1px solid #ccc; border-radius:7px; font-size:16px;"
+>
+    
     <button type="button" onclick="loadArchivedCustomers()">
     📁 Archived Customers
 </button>
@@ -2012,6 +2020,9 @@ row.appendChild(actionCell);
 tbody.appendChild(row);
 
                     });
+
+        filterCustomers();
+        
     } catch (error) {
         console.error("Customers loading error:", error);
         tbody.innerHTML =
@@ -2225,6 +2236,24 @@ async function restoreCustomer(customerId, customerName) {
     }
 }
 
+// SEARCH CUSTOMERS
+function filterCustomers() {
+    const searchValue = document
+        .getElementById("customerSearch")
+        .value.toLowerCase().trim();
+
+    const rows = document.querySelectorAll("#customersBody tr");
+
+    rows.forEach(row => {
+        const customerName = row.cells[0]?.textContent.toLowerCase() || "";
+        const phone = row.cells[1]?.textContent.toLowerCase() || "";
+
+        row.style.display =
+            customerName.includes(searchValue) ||
+            phone.includes(searchValue) ? "" : "none";
+    });
+}
+    
     // EDIT CUSTOMER
 async function editCustomer(customer) {
 
