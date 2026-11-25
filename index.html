@@ -420,6 +420,54 @@ form button {
 
 </section>
 
+    <!-- CREDIT CUSTOMER SECTION -->
+<div id="saleCustomerField" style="display:none;">
+
+    <label for="saleCustomer">Select Credit Customer</label>
+
+    <select id="saleCustomer">
+        <option value="">Select Registered Customer</option>
+        <option value="__new__">+ Register New Customer</option>
+    </select>
+
+    <!-- NEW CUSTOMER REGISTRATION -->
+    <div id="newCreditCustomerFields" style="display:none;">
+
+        <h3>Register New Credit Customer</h3>
+
+        <input type="text"
+               id="newCreditCustomerName"
+               placeholder="Customer Full Name">
+
+        <input type="tel"
+               id="newCreditCustomerPhone"
+               placeholder="Customer Phone Number">
+
+        <input type="email"
+               id="newCreditCustomerEmail"
+               placeholder="Email Address (Optional)">
+
+        <input type="text"
+               id="newCreditCustomerAddress"
+               placeholder="Customer Address">
+
+        <button type="button"
+                onclick="saveNewCreditCustomer()">
+            Save & Select Customer
+        </button>
+
+        <p id="newCreditCustomerMessage"></p>
+
+    </div>
+
+    <label for="saleRepaymentDueDate">
+        Expected Repayment Date
+    </label>
+
+    <input type="date" id="saleRepaymentDueDate">
+
+</div>
+
     <!-- CREDIT CUSTOMER SELECTION -->
 <div id="saleCustomerField" style="display:none;">
 
