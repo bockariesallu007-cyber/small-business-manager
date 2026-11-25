@@ -1991,23 +1991,30 @@ async function loadCustomers() {
 // Customer action buttons
 const actionCell = document.createElement("td");
 
+// Customer action buttons
+const actionCell = document.createElement("td");
+actionCell.style.whiteSpace = "nowrap";
+
 // Edit button
 const editButton = document.createElement("button");
 editButton.textContent = "Edit";
-            editButton.style.marginRight = "10px";
 editButton.onclick = () => editCustomer(customer);
 
 // Archive button
 const archiveButton = document.createElement("button");
 archiveButton.textContent = "Archive";
-            archiveButton.style.marginLeft = "5px";
 archiveButton.onclick = () =>
     archiveCustomer(customer.id, customer.customer_name);
 
-editButton.style.marginRight = "8px";
+// Add spacing between buttons
+actionCell.style.display = "flex";
+actionCell.style.gap = "10px";
 
 actionCell.appendChild(editButton);
 actionCell.appendChild(archiveButton);
+
+row.appendChild(actionCell);
+tbody.appendChild(row);
 row.appendChild(actionCell);
 
 tbody.appendChild(row);
