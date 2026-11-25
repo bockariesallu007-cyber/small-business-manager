@@ -371,55 +371,182 @@ form button {
 
 </section>
     
-<!-- SALES SECTION -->
+<!-- SALES MANAGEMENT SECTION -->
 <section id="salesSection" class="container" style="display:none;">
 
-    <h2>Record New Sale</h2>
+    <h2>🛒 Sales Management</h2>
+
+    <!-- SALES TYPE SELECTION -->
+    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:20px 0;">
+
+        <button type="button"
+                onclick="
+                    document.getElementById('salePaymentMethod').value='Cash';
+                    document.getElementById('salePaymentMethod').disabled=false;
+                    toggleSaleCustomerField();
+                    document.getElementById('saleActionLabel').textContent='Save Paid Sale';
+                    document.getElementById('saleModeNotice').textContent='Record a fully paid customer sale.';
+                "
+                style="padding:20px;background:#123c2c;color:white;border:0;border-radius:10px;font-size:16px;font-weight:bold;">
+
+            ✅ PAID SALES
+
+        </button>
+
+        <button type="button"
+                onclick="
+                    document.getElementById('salePaymentMethod').value='Credit';
+                    document.getElementById('salePaymentMethod').disabled=false;
+                    toggleSaleCustomerField();
+                    document.getElementById('saleActionLabel').textContent='Save Credit Sale';
+                    document.getElementById('saleModeNotice').textContent='Record a customer purchase on credit.';
+                "
+                style="padding:20px;background:#b7791f;color:white;border:0;border-radius:10px;font-size:16px;font-weight:bold;">
+
+            💳 CREDIT SALES
+
+        </button>
+
+    </div>
+
+    <p id="saleModeNotice">
+        Select Paid Sales or Credit Sales to continue.
+    </p>
 
     <form id="salesForm">
 
-        <input type="text" id="saleProduct"
-               placeholder="Product Name" required>
+        <h3>Product Information</h3>
 
-        <input type="number" id="saleQuantity"
-               placeholder="Quantity" min="1" required>
+        <input type="text"
+               id="saleProduct"
+               placeholder="Product Name"
+               required>
 
-        <input type="number" id="salePrice"
-               placeholder="Unit Price (NLe)" min="0.01"
-               step="0.01" required>
+        <input type="number"
+               id="saleQuantity"
+               placeholder="Quantity"
+               min="1"
+               step="0.01"
+               required>
 
-        <label>Payment Method</label>
-        <select id="salePaymentMethod" required>
+        <input type="number"
+               id="salePrice"
+               placeholder="Unit Price (NLe)"
+               min="0.01"
+               step="0.01"
+               required>
+
+        <h3>Payment Information</h3>
+
+        <label for="salePaymentMethod">Payment Method</label>
+
+        <select id="salePaymentMethod" required
+                onchange="toggleSaleCustomerField()">
+
             <option value="Cash">Cash</option>
             <option value="Orange Money">Orange Money</option>
             <option value="Afrimoney">Afrimoney</option>
             <option value="Bank Transfer">Bank Transfer</option>
             <option value="Credit">Credit</option>
+
         </select>
 
-        <label>Amount Paid (NLe)</label>
-        <input type="number" id="saleAmountPaid"
+        <!-- CREDIT CUSTOMER SECTION -->
+        <div id="saleCustomerField"
+             style="display:none;background:#f3f6f4;padding:15px;border-radius:10px;margin:15px 0;">
+
+            <h3>💳 Credit Customer Details</h3>
+
+            <label for="saleCustomer">
+                Select Existing Customer
+            </label>
+
+            <select id="saleCustomer">
+
+                <option value="">Select Registered Customer</option>
+
+            </select>
+
+            <!-- NEW CREDIT CUSTOMER -->
+            <div id="newCreditCustomerFields"
+                 style="display:none;background:white;padding:12px;border-radius:8px;margin-top:12px;">
+
+                <h3>Register New Credit Customer</h3>
+
+                <input type="text"
+                       id="newCreditCustomerName"
+                       placeholder="Customer Full Name">
+
+                <input type="tel"
+                       id="newCreditCustomerPhone"
+                       placeholder="Customer Phone Number">
+
+                <input type="email"
+                       id="newCreditCustomerEmail"
+                       placeholder="Email Address (Optional)">
+
+                <input type="text"
+                       id="newCreditCustomerAddress"
+                       placeholder="Customer Address">
+
+                <button type="button"
+                        onclick="saveNewCreditCustomer()">
+
+                    Save & Select Customer
+
+                </button>
+
+                <p id="newCreditCustomerMessage"></p>
+
+            </div>
+
+            <label for="saleRepaymentDueDate">
+                Expected Repayment Date
+            </label>
+
+            <input type="date"
+                   id="saleRepaymentDueDate">
+
+        </div>
+
+        <label for="saleAmountPaid">
+            Amount Paid / Initial Deposit (NLe)
+        </label>
+
+        <input type="number"
+               id="saleAmountPaid"
                placeholder="Enter amount paid"
-               min="0" step="0.01" value="0" required>
+               min="0"
+               step="0.01"
+               value="0"
+               required>
 
-        <h3>Total: <span id="saleTotal">NLe 0.00</span></h3>
+        <h3>
+            Total:
+            <span id="saleTotal">NLe 0.00</span>
+        </h3>
 
-        <h3>Outstanding Balance:
+        <h3>
+            Outstanding Balance:
             <span id="saleBalance">NLe 0.00</span>
         </h3>
 
-        <button type="submit">Save Sale</button>
+        <button type="submit"
+                id="saleSubmitButton">
+
+            <span id="saleActionLabel">Save Sale</span>
+
+        </button>
 
     </form>
+
+    <p id="salesMessage"></p>
 
     <button type="button" onclick="closeSales()">
         Back to Dashboard
     </button>
 
-    <p id="salesMessage"></p>
-
 </section>
-
     <!-- CREDIT CUSTOMER SECTION -->
 <div id="saleCustomerField" style="display:none;">
 
@@ -466,24 +593,6 @@ form button {
 
     <input type="date" id="saleRepaymentDueDate">
 
-</div>
-
-    <!-- CREDIT CUSTOMER SELECTION -->
-<div id="saleCustomerField" style="display:none;">
-
-    <label for="saleCustomer">Select Credit Customer</label>
-
-    <select id="saleCustomer">
-        <option value="">Select Registered Customer</option>
-    </select>
-
-<label for="saleRepaymentDueDate">
-    Expected Repayment Date
-</label>
-
-<input type="date"
-       id="saleRepaymentDueDate">
-    
 </div>
 
 <!-- SALES HISTORY SECTION -->
