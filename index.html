@@ -2913,6 +2913,130 @@ creditBody.appendChild(row);
             '<tr><td colspan="10">Error: ' + error.message + '</td></tr>';
     }
 }
+
+// OPEN CUSTOMER REPAYMENT FORM
+function openRepaymentForm(saleId, outstandingBalance) {
+
+    document.getElementById("repaymentSaleId").value = saleId;
+
+    document.getElementById("repaymentSaleReference").textContent =
+        saleId.slice(0, 8).toUpperCase();
+
+    document.getElementById("repaymentOutstanding").textContent =
+        "NLe " + Number(outstandingBalance).toFixed(2);
+
+    const amountInput = document.getElementById("repaymentAmount");
+
+    amountInput.value = "";
+    amountInput.max = Number(outstandingBalance).toFixed(2);
+
+    document.getElementById("repaymentMessage").textContent = "";
+
+    const panel = document.getElementById("repaymentPanel");
+
+    panel.style.display = "block";
+    panel.scrollIntoView({
+        behavior: "smooth",
+        block: "center"
+    });
+}
+
+
+// SAVE CUSTOMER REPAYMENT
+async function saveCustomerRepayment(event) {
+    event.preventDefault();
+
+    const message = document.getElementById("repaymentMessage");
+
+    const button = document.querySelector(
+        "#repaymentForm button[type='submit']"
+    );
+
+    const saleId =
+        document.getElementById("repaymentSaleId").value;
+
+    const amount =
+        Number(document.getElementById("repaymentAmount").value);
+
+    const paymentMethod =
+        document.getElementById("repaymentMethod").value;
+
+    const note =
+        document.getElementById("repaymentNote").value.trim();
+
+    const outstanding = Number(
+        document.getElementById("repaymentAmount").max
+    );
+
+    if (!saleId) {
+        message.textContent = "Please select a credit sale.";
+        return;
+    }
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+        message.textContent = "Enter a valid repayment amount.";
+        return;
+    }
+
+    if (amount > outstanding) {
+        message.textContent =
+            "Payment cannot exceed the outstanding balance.";
+        return;
+    }
+
+    button.disabled = true;
+    message.textContent = "Recording repayment...";
+
+    try {
+        const { data: result, error } =
+            await supabaseClient.rpc(
+                "record_customer_repayment",
+                {
+                    p_sale_id: saleId,
+                    p_amount: amount,
+                    p_payment_method: paymentMethod,
+                    p_note: note || null
+                }
+            );
+
+        if (error) throw error;
+
+        const remaining =
+            Number(result.outstanding_balance);
+
+        message.textContent =
+            "Repayment saved successfully! " +
+            "Remaining balance: NLe " +
+            remaining.toFixed(2);
+
+        document.getElementById("repaymentOutstanding").textContent =
+            "NLe " + remaining.toFixed(2);
+
+        // UPDATE HISTORY TABLES
+        await loadSalesHistory();
+
+        if (remaining === 0) {
+            message.textContent =
+                "Repayment completed successfully! Customer is fully paid.";
+        }
+
+        document.getElementById("repaymentAmount").value = "";
+        document.getElementById("repaymentNote").value = "";
+
+    } catch (error) {
+        message.textContent = "Error: " + error.message;
+
+        console.error("Repayment error:", error);
+
+    } finally {
+        button.disabled = false;
+    }
+}
+
+
+// CONNECT REPAYMENT FORM
+document.getElementById("repaymentForm")
+    .addEventListener("submit", saveCustomerRepayment);
     
 // SAVE PAID SALE OR CREDIT SALE
 async function saveSale(event) {
