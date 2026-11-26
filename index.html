@@ -1697,32 +1697,24 @@ document.getElementById("inventoryForm")
 <script>
 
 // OPEN APPLICATION INFORMATION PAGES
+// OPEN APPLICATION INFORMATION PAGES
 function openAppPage(page) {
     const pages = {
         about: {
             title: "ℹ️ About Small Business Manager",
-            content: "Small Business Manager is designed to help businesses manage sales, inventory, expenses, customers and suppliers. It supports business records in Sierra Leone New Leones (NLe)."
+            content: "Small Business Manager helps businesses manage sales, inventory, expenses, customers and suppliers. It supports business records in Sierra Leone New Leones (NLe)."
         },
 
         help: {
             title: "🆘 Help & Support",
-            content: "Welcome to Help & Support. Use the Dashboard to monitor your business, Sales to record transactions, Inventory to manage stock, and Reports to review business performance."
-        },
-
-        contact: {
-            title: "📞 Contact Us",
-            content: "Need assistance with Small Business Manager? Contact the application support team. Support contact details will be provided here."
+            content: "Use the Dashboard to monitor your business, Sales to record transactions, Inventory to manage stock, and Reports to review business performance."
         },
 
         privacy: {
             title: "🔐 Privacy Policy",
-            content: "Small Business Manager handles business information such as products, sales, expenses and customer records. Access to this information depends on the application's login and database security settings. Do not share your login password with anyone."
+            content: "Small Business Manager handles business information such as products, sales, expenses and customer records. Access depends on login and database security settings. Do not share your login password."
         }
     };
-
-    const selectedPage = pages[page];
-
-    if (!selectedPage) return;
 
     toggleAppMenu();
 
@@ -1739,6 +1731,93 @@ function openAppPage(page) {
 
         document.body.appendChild(panel);
     }
+
+    // CONTACT US PAGE
+    if (page === "contact") {
+        panel.innerHTML = `
+            <div style="background:white;width:100%;max-width:500px;
+                max-height:90vh;overflow-y:auto;padding:25px;
+                border-radius:12px;box-sizing:border-box;">
+
+                <h2 style="color:#123c2c;margin-top:0;">
+                    📞 Contact Us
+                </h2>
+
+                <p style="line-height:1.6;color:#444;">
+                    Send us your feedback, report a problem,
+                    or suggest an improvement.
+                </p>
+
+                <form id="appFeedbackForm"
+                    onsubmit="submitAppFeedback(event)">
+
+                    <label>Full Name</label>
+                    <input type="text" id="feedbackName" required
+                        style="width:100%;padding:12px;margin:7px 0 15px;
+                        box-sizing:border-box;border:1px solid #ccc;
+                        border-radius:7px;">
+
+                    <label>Email Address</label>
+                    <input type="email" id="feedbackEmail" required
+                        style="width:100%;padding:12px;margin:7px 0 15px;
+                        box-sizing:border-box;border:1px solid #ccc;
+                        border-radius:7px;">
+
+                    <label>Feedback Category</label>
+                    <select id="feedbackCategory" required
+                        style="width:100%;padding:12px;margin:7px 0 15px;
+                        box-sizing:border-box;border:1px solid #ccc;
+                        border-radius:7px;">
+
+                        <option value="">Select a category</option>
+                        <option value="Feedback">General Feedback</option>
+                        <option value="Problem">Report a Problem</option>
+                        <option value="Suggestion">Suggest an Improvement</option>
+                        <option value="Other">Other</option>
+                    </select>
+
+                    <label>Subject</label>
+                    <input type="text" id="feedbackSubject" required
+                        style="width:100%;padding:12px;margin:7px 0 15px;
+                        box-sizing:border-box;border:1px solid #ccc;
+                        border-radius:7px;">
+
+                    <label>Message</label>
+                    <textarea id="feedbackMessage" required rows="5"
+                        style="width:100%;padding:12px;margin:7px 0 15px;
+                        box-sizing:border-box;border:1px solid #ccc;
+                        border-radius:7px;resize:vertical;"></textarea>
+
+                    <p id="feedbackStatus"
+                        style="font-size:14px;"></p>
+
+                    <button type="submit" id="feedbackSubmitButton"
+                        style="background:#123c2c;color:white;border:0;
+                        padding:12px 20px;border-radius:7px;
+                        cursor:pointer;font-size:15px;width:100%;">
+                        Submit Feedback
+                    </button>
+                </form>
+
+                <button type="button"
+                    onclick="document.getElementById('appInfoPanel').remove()"
+                    style="background:#777;color:white;border:0;
+                    padding:12px 25px;border-radius:7px;
+                    cursor:pointer;font-size:15px;width:100%;
+                    margin-top:10px;">
+                    Close
+                </button>
+
+            </div>
+        `;
+
+        return;
+    }
+
+    // OTHER INFORMATION PAGES
+    const selectedPage = pages[page];
+
+    if (!selectedPage) return;
 
     panel.innerHTML = `
         <div style="background:white;width:100%;max-width:500px;
@@ -1762,6 +1841,71 @@ function openAppPage(page) {
 
         </div>
     `;
+}
+
+// SUBMIT APPLICATION FEEDBACK
+async function submitAppFeedback(event) {
+    event.preventDefault();
+
+    const form = document.getElementById("appFeedbackForm");
+    const status = document.getElementById("feedbackStatus");
+    const button = document.getElementById("feedbackSubmitButton");
+
+    const fullName = document.getElementById("feedbackName").value.trim();
+    const email = document.getElementById("feedbackEmail").value.trim();
+    const category = document.getElementById("feedbackCategory").value;
+    const subject = document.getElementById("feedbackSubject").value.trim();
+    const message = document.getElementById("feedbackMessage").value.trim();
+
+    if (!fullName || !email || !category || !subject || !message) {
+        status.textContent = "Please complete all fields.";
+        status.style.color = "red";
+        return;
+    }
+
+    button.disabled = true;
+    button.textContent = "Submitting...";
+    status.textContent = "Please wait...";
+    status.style.color = "#555";
+
+    try {
+        const { data: userData, error: userError } =
+            await supabaseClient.auth.getUser();
+
+        if (userError) throw userError;
+
+        if (!userData.user) {
+            throw new Error("Please log in before submitting feedback.");
+        }
+
+        const { error } = await supabaseClient
+            .from("app_feedback")
+            .insert({
+                user_id: userData.user.id,
+                full_name: fullName,
+                email: email,
+                category: category,
+                subject: subject,
+                message: message
+            });
+
+        if (error) throw error;
+
+        status.textContent = "Thank you! Your feedback was submitted successfully.";
+        status.style.color = "green";
+
+        form.reset();
+
+    } catch (error) {
+        console.error("Feedback submission error:", error);
+
+        status.textContent = error.message || "Unable to submit feedback.";
+        status.style.color = "red";
+
+    } finally {
+        button.disabled = false;
+        button.textContent = "Submit Feedback";
+    }
 }
     
 // OPEN AND CLOSE APPLICATION MENU
