@@ -1686,21 +1686,19 @@ async function loadDashboardStats(businessId) {
             (sum, item) => sum + Number(item.total_amount || 0), 0
         );
 
-        // GET TODAY'S SOLD PRODUCTS
-        let totalCost = 0;
-        let missingCostCount = 0;
+       // GET TOTAL PRODUCTS AND STOCK UNITS
+const { data: products, count, error: productsError } =
+    await supabaseClient
+        .from("products")
+        .select("quantity", { count: "exact" })
+        .eq("business_id", businessId);
 
-        if (sales && sales.length > 0) {
-            const saleIds = sales.map(sale => sale.id);
+if (productsError) throw productsError;
 
-            const { data: saleItems, error: itemsError } =
-                await supabaseClient
-                    .from("sale_items")
-                    .select("quantity, purchase_price")
-                    .in("sale_id", saleIds);
-
-            if (itemsError) throw itemsError;
-
+const totalStockUnits = (products || []).reduce(
+    (sum, product) => sum + Number(product.quantity || 0),
+    0
+);
             (saleItems || []).forEach(item => {
                 if (item.purchase_price === null) {
                     missingCostCount++;
