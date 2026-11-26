@@ -1760,6 +1760,9 @@ const totalStockUnits = (products || []).reduce(
         document.getElementById("totalProducts").textContent =
             count || 0;
 
+document.getElementById("totalStockUnits").textContent =
+    totalStockUnits;
+    
         // LOAD LOW STOCK ALERTS
         await loadLowStockAlerts(businessId);
 
