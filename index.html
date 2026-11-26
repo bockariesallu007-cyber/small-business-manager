@@ -1686,19 +1686,21 @@ async function loadDashboardStats(businessId) {
             (sum, item) => sum + Number(item.total_amount || 0), 0
         );
 
-       // GET TOTAL PRODUCTS AND STOCK UNITS
-const { data: products, count, error: productsError } =
-    await supabaseClient
-        .from("products")
-        .select("quantity", { count: "exact" })
-        .eq("business_id", businessId);
+        // CALCULATE COST OF TODAY'S SOLD PRODUCTS
+        let totalCost = 0;
+        let missingCostCount = 0;
 
-if (productsError) throw productsError;
+        if (sales && sales.length > 0) {
+            const saleIds = sales.map(sale => sale.id);
 
-const totalStockUnits = (products || []).reduce(
-    (sum, product) => sum + Number(product.quantity || 0),
-    0
-);
+            const { data: saleItems, error: itemsError } =
+                await supabaseClient
+                    .from("sale_items")
+                    .select("quantity, purchase_price")
+                    .in("sale_id", saleIds);
+
+            if (itemsError) throw itemsError;
+
             (saleItems || []).forEach(item => {
                 if (item.purchase_price === null) {
                     missingCostCount++;
@@ -1724,13 +1726,19 @@ const totalStockUnits = (products || []).reduce(
             (sum, item) => sum + Number(item.amount || 0), 0
         );
 
-        // GET TOTAL PRODUCTS
-        const { count, error: productsError } = await supabaseClient
-            .from("products")
-            .select("*", { count: "exact", head: true })
-            .eq("business_id", businessId);
+        // GET TOTAL PRODUCTS AND STOCK UNITS
+        const { data: products, count, error: productsError } =
+            await supabaseClient
+                .from("products")
+                .select("quantity", { count: "exact" })
+                .eq("business_id", businessId);
 
         if (productsError) throw productsError;
+
+        const totalStockUnits = (products || []).reduce(
+            (sum, product) => sum + Number(product.quantity || 0),
+            0
+        );
 
         // UPDATE DASHBOARD
         document.getElementById("todaySales").textContent =
@@ -1760,9 +1768,9 @@ const totalStockUnits = (products || []).reduce(
         document.getElementById("totalProducts").textContent =
             count || 0;
 
-document.getElementById("totalStockUnits").textContent =
-    totalStockUnits;
-    
+        document.getElementById("totalStockUnits").textContent =
+            totalStockUnits;
+
         // LOAD LOW STOCK ALERTS
         await loadLowStockAlerts(businessId);
 
