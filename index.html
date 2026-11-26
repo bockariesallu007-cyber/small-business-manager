@@ -2000,10 +2000,21 @@ async function loadAppFeedback() {
 
         if (error) throw error;
 
-        if (!data || data.length === 0) {
-            content.innerHTML = "<p>No feedback submissions yet.</p>";
-            return;
-        }
+       if (!data) {
+    content.innerHTML = "<p>No feedback submissions found.</p>";
+    return;
+}
+
+// CALCULATE FEEDBACK SUMMARY
+const totalCount = data.length;
+const newCount = data.filter(item => item.status === "New").length;
+const reviewedCount = data.filter(item => item.status === "Reviewed").length;
+const resolvedCount = data.filter(item => item.status === "Resolved").length;
+
+if (data.length === 0) {
+    content.innerHTML = "<p>No feedback submissions yet.</p>";
+    return;
+}
 
         const escapeHTML = value =>
             String(value ?? "").replace(/[&<>"']/g, char => ({
@@ -2014,7 +2025,31 @@ async function loadAppFeedback() {
                 "'": "&#39;"
             })[char]);
 
-        content.innerHTML = data.map(item => `
+        content.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:20px;">
+
+        <div style="background:#123c2c;color:white;padding:18px;border-radius:9px;text-align:center;">
+            <h2>${totalCount}</h2>
+            <p>Total Feedback</p>
+        </div>
+
+        <div style="background:#fff3cd;color:#856404;padding:18px;border-radius:9px;text-align:center;">
+            <h2>${newCount}</h2>
+            <p>New</p>
+        </div>
+
+        <div style="background:#d1ecf1;color:#0c5460;padding:18px;border-radius:9px;text-align:center;">
+            <h2>${reviewedCount}</h2>
+            <p>Reviewed</p>
+        </div>
+
+        <div style="background:#d4edda;color:#155724;padding:18px;border-radius:9px;text-align:center;">
+            <h2>${resolvedCount}</h2>
+            <p>Resolved</p>
+        </div>
+
+    </div>
+` + data.map(item => `
             <div style="border:1px solid #ddd;border-radius:9px;
                 padding:15px;margin-bottom:15px;">
 
