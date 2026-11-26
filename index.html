@@ -232,6 +232,48 @@ form button {
     
 <main class="container">
 
+<!-- APPLICATION MENU BUTTON -->
+<div style="display:flex;justify-content:flex-end;padding:10px 15px;">
+    <button type="button" onclick="toggleAppMenu()"
+        style="background:#123c2c;color:white;border:0;border-radius:8px;padding:12px 18px;font-size:22px;cursor:pointer;">
+        ☰
+    </button>
+</div>
+
+<!-- APPLICATION MENU OVERLAY -->
+<div id="appMenuOverlay" onclick="toggleAppMenu()"
+    style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9998;">
+</div>
+
+<!-- APPLICATION SIDE MENU -->
+<div id="appSideMenu"
+    style="position:fixed;top:0;right:-320px;width:280px;max-width:80%;height:100%;background:white;z-index:9999;box-shadow:-3px 0 12px rgba(0,0,0,0.2);transition:right 0.3s;padding:20px;box-sizing:border-box;">
+
+    <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #ddd;padding-bottom:15px;">
+        <h2 style="color:#123c2c;margin:0;">Menu</h2>
+        <button type="button" onclick="toggleAppMenu()"
+            style="border:0;background:none;font-size:26px;cursor:pointer;">
+            ✕
+        </button>
+    </div>
+
+    <div style="margin-top:20px;">
+
+        <button type="button" onclick="openAppPage('about')">ℹ️ About</button>
+
+       <button type="button" onclick="toggleAppMenu(); openSettings();"
+    style="display:block;width:100%;padding:15px;margin:8px 0;text-align:left;background:#f4f7f5;border:0;border-radius:8px;font-size:16px;cursor:pointer;">
+    ⚙️ Settings
+</button>
+        <button type="button" onclick="openAppPage('help')">🆘 Help & Support</button>
+
+        <button type="button" onclick="openAppPage('contact')">📞 Contact Us</button>
+
+        <button type="button" onclick="openAppPage('privacy')">🔐 Privacy Policy</button>
+
+    </div>
+</div>
+    
     <section class="welcome">
         <h2>Business Dashboard</h2>
         <p>Welcome! Manage your daily business activities here.</p>
@@ -1654,6 +1696,88 @@ document.getElementById("inventoryForm")
 
 <script>
 
+// OPEN APPLICATION INFORMATION PAGES
+function openAppPage(page) {
+    const pages = {
+        about: {
+            title: "ℹ️ About Small Business Manager",
+            content: "Small Business Manager is designed to help businesses manage sales, inventory, expenses, customers and suppliers. It supports business records in Sierra Leone New Leones (NLe)."
+        },
+
+        help: {
+            title: "🆘 Help & Support",
+            content: "Welcome to Help & Support. Use the Dashboard to monitor your business, Sales to record transactions, Inventory to manage stock, and Reports to review business performance."
+        },
+
+        contact: {
+            title: "📞 Contact Us",
+            content: "Need assistance with Small Business Manager? Contact the application support team. Support contact details will be provided here."
+        },
+
+        privacy: {
+            title: "🔐 Privacy Policy",
+            content: "Small Business Manager handles business information such as products, sales, expenses and customer records. Access to this information depends on the application's login and database security settings. Do not share your login password with anyone."
+        }
+    };
+
+    const selectedPage = pages[page];
+
+    if (!selectedPage) return;
+
+    toggleAppMenu();
+
+    let panel = document.getElementById("appInfoPanel");
+
+    if (!panel) {
+        panel = document.createElement("div");
+        panel.id = "appInfoPanel";
+
+        panel.style.cssText =
+            "position:fixed;inset:0;background:rgba(0,0,0,0.5);" +
+            "z-index:10001;display:flex;align-items:center;" +
+            "justify-content:center;padding:15px;";
+
+        document.body.appendChild(panel);
+    }
+
+    panel.innerHTML = `
+        <div style="background:white;width:100%;max-width:500px;
+            padding:25px;border-radius:12px;box-sizing:border-box;">
+
+            <h2 style="color:#123c2c;margin-top:0;">
+                ${selectedPage.title}
+            </h2>
+
+            <p style="line-height:1.7;color:#444;">
+                ${selectedPage.content}
+            </p>
+
+            <button type="button"
+                onclick="document.getElementById('appInfoPanel').remove()"
+                style="background:#123c2c;color:white;border:0;
+                padding:12px 25px;border-radius:7px;
+                cursor:pointer;font-size:15px;">
+                Close
+            </button>
+
+        </div>
+    `;
+}
+    
+// OPEN AND CLOSE APPLICATION MENU
+function toggleAppMenu() {
+    const menu = document.getElementById("appSideMenu");
+    const overlay = document.getElementById("appMenuOverlay");
+
+    if (menu.style.right === "0px") {
+        menu.style.right = "-320px";
+        overlay.style.display = "none";
+    } else {
+        menu.style.right = "0px";
+        overlay.style.display = "block";
+    }
+}
+    
 async function loadDashboardStats(businessId) {
     const today = new Date();
 
