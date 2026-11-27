@@ -712,8 +712,9 @@ footer {
 
         <table>
             <thead>
-                <tr>
-                    <th>Product</th>
+               <tr>
+    <th>Image</th>
+    <th>Product</th>
                     <th>Code</th>
                     <th>Category</th>
                     <th>Purchase Price</th>
@@ -1917,6 +1918,30 @@ async function saveInventoryProduct(event) {
 
         if (businessError) throw businessError;
 
+// UPLOAD PRODUCT IMAGE
+let imagePath = null;
+
+const imageFile = document.getElementById("productImage").files[0];
+
+if (imageFile) {
+    const fileExtension = imageFile.name.split(".").pop().toLowerCase();
+
+    const fileName =
+        business.id + "/" + crypto.randomUUID() + "." + fileExtension;
+
+    const { data: uploadData, error: uploadError } =
+        await supabaseClient.storage
+            .from("business-files")
+            .upload(fileName, imageFile, {
+                cacheControl: "3600",
+                upsert: false
+            });
+
+    if (uploadError) throw uploadError;
+
+    imagePath = uploadData.path;
+}
+        
         const { error: productError } =
             await supabaseClient
                 .from("products")
@@ -1927,8 +1952,10 @@ async function saveInventoryProduct(event) {
                     category: category || null,
                     purchase_price: purchasePrice,
                     selling_price: sellingPrice,
-                    quantity: quantity,
-                    low_stock_level: lowStockLevel
+                   quantity: quantity,
+low_stock_level: lowStockLevel,
+image_path: imagePath
+                    
                 });
 
         if (productError) throw productError;
@@ -1987,30 +2014,58 @@ async function loadInventory() {
 
         tbody.innerHTML = "";
 
-        products.forEach(product => {
-            const row = document.createElement("tr");
+       for (const product of products) {
+    const row = document.createElement("tr");
 
-            const values = [
-                product.product_name,
-                product.product_code || "N/A",
-                product.category || "N/A",
-                "NLe " + Number(product.purchase_price || 0).toFixed(2),
-                "NLe " + Number(product.selling_price || 0).toFixed(2),
-                product.quantity,
-                Number(product.quantity) <= Number(product.low_stock_level)
-                    ? "Low Stock"
-                    : "In Stock"
-            ];
+    // PRODUCT IMAGE
+    const imageCell = document.createElement("td");
 
-            values.forEach(value => {
-                const cell = document.createElement("td");
-                cell.textContent = value;
-                row.appendChild(cell);
-            });
+    if (product.image_path) {
+        const { data: imageData, error: imageError } =
+            await supabaseClient.storage
+                .from("business-files")
+                .createSignedUrl(product.image_path, 3600);
 
-            tbody.appendChild(row);
-        });
+        if (!imageError && imageData) {
+            const img = document.createElement("img");
 
+            img.src = imageData.signedUrl;
+            img.alt = product.product_name;
+            img.style.width = "55px";
+            img.style.height = "55px";
+            img.style.objectFit = "cover";
+            img.style.borderRadius = "6px";
+
+            imageCell.appendChild(img);
+        } else {
+            imageCell.textContent = "No image";
+        }
+    } else {
+        imageCell.textContent = "No image";
+    }
+
+    row.appendChild(imageCell);
+
+    const values = [
+        product.product_name,
+        product.product_code || "N/A",
+        product.category || "N/A",
+        "NLe " + Number(product.purchase_price || 0).toFixed(2),
+        "NLe " + Number(product.selling_price || 0).toFixed(2),
+        product.quantity,
+        Number(product.quantity) <= Number(product.low_stock_level)
+            ? "Low Stock"
+            : "In Stock"
+    ];
+
+    values.forEach(value => {
+        const cell = document.createElement("td");
+        cell.textContent = value;
+        row.appendChild(cell);
+    });
+
+    tbody.appendChild(row);
+}
     } catch (error) {
         console.error("Inventory error:", error);
         tbody.innerHTML =
