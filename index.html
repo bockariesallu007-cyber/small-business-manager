@@ -2117,8 +2117,8 @@ async function deleteProduct(productId) {
 async function loadInventory() {
     const tbody = document.getElementById("inventoryBody");
 
-    tbody.innerHTML =
-        <td colspan="9">Loading products...</td>
+  tbody.innerHTML =
+    '<tr><td colspan="9">Loading products...</td></tr>';
 
     try {
         const { data: { user }, error: userError } =
@@ -2146,9 +2146,8 @@ async function loadInventory() {
         if (productsError) throw productsError;
 
         if (!products || products.length === 0) {
-            tbody.innerHTML =
-                <td colspan="9">No products found.</td>
-            return;
+           tbody.innerHTML =
+    '<tr><td colspan="9">No products found.</td></tr>';
         }
 
         tbody.innerHTML = "";
