@@ -721,12 +721,13 @@ footer {
                     <th>Selling Price</th>
                     <th>Quantity</th>
                     <th>Stock Status</th>
+                   <th>Actions</th>
                 </tr>
             </thead>
 
             <tbody id="inventoryBody">
                 <tr>
-                    <td colspan="7">Products will appear here.</td>
+                    <td colspan="9">Products will appear here.</td>
                 </tr>
             </tbody>
         </table>
@@ -1974,12 +1975,150 @@ image_path: imagePath
     }
 }
 
+    // ADD STOCK TO EXISTING PRODUCT
+async function addProductStock(productId) {
+    try {
+        const { data: product, error } = await supabaseClient
+            .from("products")
+            .select("product_name, quantity")
+            .eq("id", productId)
+            .single();
+
+        if (error) throw error;
+
+        const amount = Number(
+            prompt("Enter additional quantity for " + product.product_name + ":")
+        );
+
+        if (!Number.isFinite(amount) || amount <= 0) {
+            alert("Please enter a valid quantity greater than zero.");
+            return;
+        }
+
+        const newQuantity = Number(product.quantity) + amount;
+
+        const { error: updateError } = await supabaseClient
+            .from("products")
+            .update({ quantity: newQuantity })
+            .eq("id", productId);
+
+        if (updateError) throw updateError;
+
+        alert("Stock updated successfully!");
+
+        await loadInventory();
+
+    } catch (error) {
+        console.error("Add stock error:", error);
+        alert("Unable to add stock: " + error.message);
+    }
+}
+
+    // EDIT EXISTING PRODUCT
+async function editProduct(productId) {
+    try {
+        const { data: product, error } = await supabaseClient
+            .from("products")
+            .select("*")
+            .eq("id", productId)
+            .single();
+
+        if (error) throw error;
+
+        const productName = prompt("Product Name:", product.product_name);
+        if (productName === null) return;
+
+        const productCode = prompt("Product Code:", product.product_code || "");
+        if (productCode === null) return;
+
+        const category = prompt("Category:", product.category || "");
+        if (category === null) return;
+
+        const purchasePrice = prompt("Purchase Price:", product.purchase_price);
+        if (purchasePrice === null) return;
+
+        const sellingPrice = prompt("Selling Price:", product.selling_price);
+        if (sellingPrice === null) return;
+
+        const quantity = prompt("Quantity:", product.quantity);
+        if (quantity === null) return;
+
+        const lowStockLevel = prompt("Low Stock Level:", product.low_stock_level);
+        if (lowStockLevel === null) return;
+
+        if (!productName.trim()) {
+            alert("Product name is required.");
+            return;
+        }
+
+        const numbers = [
+            purchasePrice,
+            sellingPrice,
+            quantity,
+            lowStockLevel
+        ].map(Number);
+
+        if (numbers.some(value => !Number.isFinite(value) || value < 0)) {
+            alert("Prices and quantities must be valid non-negative numbers.");
+            return;
+        }
+
+        const { error: updateError } = await supabaseClient
+            .from("products")
+            .update({
+                product_name: productName.trim(),
+                product_code: productCode.trim() || null,
+                category: category.trim() || null,
+                purchase_price: numbers[0],
+                selling_price: numbers[1],
+                quantity: numbers[2],
+                low_stock_level: numbers[3]
+            })
+            .eq("id", productId);
+
+        if (updateError) throw updateError;
+
+        alert("Product updated successfully!");
+        await loadInventory();
+
+    } catch (error) {
+        console.error("Edit product error:", error);
+        alert("Unable to edit product: " + error.message);
+    }
+}
+
+// DELETE PRODUCT
+async function deleteProduct(productId) {
+    const confirmed = confirm(
+        "Are you sure you want to delete this product? This action cannot be undone."
+    );
+
+    if (!confirmed) return;
+
+    try {
+        const { error } = await supabaseClient
+            .from("products")
+            .delete()
+            .eq("id", productId);
+
+        if (error) throw error;
+
+        alert("Product deleted successfully!");
+
+        await loadInventory();
+
+    } catch (error) {
+        console.error("Delete product error:", error);
+        alert("Unable to delete product: " + error.message);
+    }
+}
+    
 // LOAD INVENTORY FROM SUPABASE
 async function loadInventory() {
     const tbody = document.getElementById("inventoryBody");
 
     tbody.innerHTML =
-        '<tr><td colspan="7">Loading products...</td></tr>';
+        <td colspan="9">Loading products...</td>
 
     try {
         const { data: { user }, error: userError } =
@@ -2008,7 +2147,7 @@ async function loadInventory() {
 
         if (!products || products.length === 0) {
             tbody.innerHTML =
-                '<tr><td colspan="7">No products found.</td></tr>';
+                <td colspan="9">No products found.</td>
             return;
         }
 
@@ -2064,12 +2203,29 @@ async function loadInventory() {
         row.appendChild(cell);
     });
 
+// PRODUCT ACTIONS
+const actionCell = document.createElement("td");
+
+actionCell.innerHTML = `
+    <button type="button" onclick="addProductStock('${product.id}')">
+        Add Stock
+    </button>
+    <button type="button" onclick="editProduct('${product.id}')">
+        Edit
+    </button>
+    <button type="button" onclick="deleteProduct('${product.id}')">
+        Delete
+    </button>
+`;
+
+row.appendChild(actionCell);
+           
     tbody.appendChild(row);
 }
     } catch (error) {
         console.error("Inventory error:", error);
         tbody.innerHTML =
-            '<tr><td colspan="7">Error: ' + error.message + '</td></tr>';
+            '<td colspan="9">Error: ' + error.message + '</td></tr>';
     }
 }
 
