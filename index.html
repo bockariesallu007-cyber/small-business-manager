@@ -666,7 +666,8 @@ footer {
 </label>
 
 <input type="file" id="productImage"
-    accept="image/jpeg,image/png,image/webp">
+    accept="image/*"
+    capture="environment">
 
 <img id="productImagePreview"
     src=""
@@ -678,7 +679,19 @@ footer {
 
         <input type="text" id="productCode"
             placeholder="Product Code">
+        
+<button type="button" onclick="openBarcodeScanner()">
+    📷 Scan Product Barcode
+</button>
 
+<div id="barcodeScannerContainer" style="display:none;margin-top:15px;">
+    <div id="barcodeReader" style="width:100%;max-width:400px;"></div>
+
+    <button type="button" onclick="closeBarcodeScanner()">
+        Close Scanner
+    </button>
+</div>
+        
         <input type="text" id="productCategory"
             placeholder="Category">
 
@@ -2111,6 +2124,67 @@ async function deleteProduct(productId) {
         console.error("Delete product error:", error);
         alert("Unable to delete product: " + error.message);
     }
+}
+
+// BARCODE SCANNER
+let barcodeScanner = null;
+
+async function openBarcodeScanner() {
+    try {
+        if (!window.Html5Qrcode) {
+            await new Promise((resolve, reject) => {
+                const script = document.createElement("script");
+
+                script.src =
+                    "https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js";
+
+                script.onload = resolve;
+                script.onerror = () =>
+                    reject(new Error("Unable to load barcode scanner."));
+
+                document.head.appendChild(script);
+            });
+        }
+
+        document.getElementById("barcodeScannerContainer").style.display = "block";
+
+        barcodeScanner = new Html5Qrcode("barcodeReader");
+
+        await barcodeScanner.start(
+            { facingMode: "environment" },
+            {
+                fps: 10,
+                qrbox: { width: 250, height: 150 }
+            },
+            async (decodedText) => {
+                document.getElementById("productCode").value = decodedText;
+
+                alert("Barcode scanned: " + decodedText);
+
+                await closeBarcodeScanner();
+            },
+            () => {}
+        );
+
+    } catch (error) {
+        console.error("Barcode scanner error:", error);
+        alert("Unable to start camera: " + error.message);
+    }
+}
+
+async function closeBarcodeScanner() {
+    if (barcodeScanner) {
+        try {
+            await barcodeScanner.stop();
+            barcodeScanner.clear();
+        } catch (error) {
+            console.error("Scanner closing error:", error);
+        }
+
+        barcodeScanner = null;
+    }
+
+    document.getElementById("barcodeScannerContainer").style.display = "none";
 }
     
 // LOAD INVENTORY FROM SUPABASE
